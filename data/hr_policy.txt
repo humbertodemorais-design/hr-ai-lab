@@ -1,0 +1,119 @@
+=============================================================
+EMPLOYEE HR POLICY HANDBOOK — ACME CORPORATION
+Last Updated: January 2025
+=============================================================
+
+-------------------------------------------------------------
+1. ANNUAL LEAVE POLICY
+-------------------------------------------------------------
+All full-time employees are entitled to 25 days of annual leave per year.
+Part-time employees receive annual leave on a pro-rata basis.
+Leave must be approved by line managers at least 2 weeks in advance.
+During peak business periods (December and August), leave requests require
+4 weeks advance notice and are subject to team availability.
+Unused leave can be carried over up to a maximum of 5 days per year.
+Carried over leave must be used within the first quarter (Q1) of the new year
+or it will be forfeited.
+Employees may not take more than 15 consecutive working days of leave
+without prior written approval from their department head.
+Leave balances are visible on the HR self-service portal at all times.
+
+-------------------------------------------------------------
+2. REMOTE WORK POLICY
+-------------------------------------------------------------
+Employees may work remotely up to 3 days per week.
+The remaining 2 days must be spent in the office unless otherwise agreed.
+Core hours are 10am to 3pm where all employees must be available online
+and responsive to communications regardless of work location.
+Remote work arrangements must be agreed with the line manager in writing.
+Employees working remotely are responsible for maintaining a safe,
+professional, and distraction-free work environment.
+The company will provide a one-time home office equipment allowance of
+up to £500 for eligible employees working remotely.
+Remote work from outside the country of employment requires prior approval
+from both the line manager and the HR department, and must not exceed
+4 weeks per calendar year for tax and compliance reasons.
+Employees on probation are not eligible for remote work during their
+first 3 months of employment.
+
+-------------------------------------------------------------
+3. PROBATION POLICY
+-------------------------------------------------------------
+All new employees are subject to a probation period of 6 months.
+During probation, performance will be reviewed at the 1-month,
+3-month, and 6-month marks.
+Employees on probation are not eligible for remote work, bonus schemes,
+or enhanced benefits until probation is successfully completed.
+Either party may terminate employment during probation with 2 weeks notice.
+Upon successful completion of probation, the employee moves to the standard
+notice period as defined in their contract.
+Line managers must submit a probation completion form to HR at least
+2 weeks before the probation end date.
+
+-------------------------------------------------------------
+4. LEARNING AND DEVELOPMENT POLICY
+-------------------------------------------------------------
+Every employee is entitled to a personal Learning and Development (L&D)
+budget of £1,500 per year.
+The L&D budget can be used for external courses, certifications,
+conferences, books, and online learning platforms.
+All L&D spend must be pre-approved by the line manager before booking.
+Employees must submit a learning request form via the HR portal.
+If the cost of a course exceeds £500, a post-completion learning summary
+must be submitted to the line manager within 30 days.
+Mandatory compliance training (including GDPR, Health and Safety, and
+Information Security) must be completed within 30 days of joining and
+renewed annually. Failure to complete mandatory training may result in
+disciplinary action.
+The company uses Cornerstone OnDemand (CSOD) as its Learning Management
+System (LMS). All training records are maintained on the LMS.
+Employees wishing to pursue a formal qualification (degree, masters, or
+professional certification) may apply for study leave of up to 3 days
+per year subject to manager approval.
+
+-------------------------------------------------------------
+5. PERFORMANCE REVIEW POLICY
+-------------------------------------------------------------
+Performance reviews are conducted twice per year: in June and December.
+All employees must complete a self-assessment form at least one week
+before their scheduled review meeting.
+Performance is rated on a five-point scale:
+  1 - Below expectations
+  2 - Partially meets expectations
+  3 - Meets expectations
+  4 - Exceeds expectations
+  5 - Outstanding
+Employees rated 1 or 2 will be placed on a Performance Improvement Plan
+(PIP) within 30 days of the review.
+A PIP typically runs for 60 to 90 days and includes specific measurable
+targets, regular check-ins, and HR involvement.
+Employees rated 4 or 5 are eligible for accelerated career progression
+discussions and may be considered for spot bonuses.
+All review documentation must be submitted to HR within 5 business days
+of the review meeting.
+
+-------------------------------------------------------------
+6. COMPENSATION AND BONUS POLICY
+-------------------------------------------------------------
+Salaries are reviewed annually in January, effective from 1st February.
+Salary increases are based on performance rating, market benchmarking,
+and budget availability.
+Employees must have completed their probation period to be eligible
+for a salary review.
+The company operates a discretionary annual bonus scheme.
+Bonus eligibility requires a minimum performance rating of 3 (meets
+expectations) in the most recent review cycle.
+Bonus payments are made in March each year for the previous financial year.
+Employees who leave the company before the bonus payment date are not
+eligible to receive a bonus unless otherwise stated in their contract.
+All compensation information is strictly confidential.
+
+-------------------------------------------------------------
+7. GRIEVANCE POLICY
+-------------------------------------------------------------
+The company is committed to providing a fair and respectful workplace.
+Any employee who has a grievance relating to their employment should
+first attempt to resolve it informally with their line manager.
+If informal resolution is not possible, the employee may raise a formal
+grievance by submitting a written grievance form to HR.
+HR will acknowledge receipt of a
