@@ -10,7 +10,8 @@ Modules:
 """
 
 from agents.knowledge_agent import ask_claude, load_policy
-from agents.workflow_agent import classify_ticket
+from agents.workflow_agent import classify_ticket, process_tickets
+from data.sample_tickets import SAMPLE_TICKETS
 import json
 import time
 
@@ -55,31 +56,16 @@ def run_demo():
     print("Demonstrates: Intent classification · Priority detection · "
           "Escalation logic · Agentic routing\n")
 
-    demo_tickets = [
-        "I haven't received my salary this month — it's been 5 days "
-        "past payday. This is urgent.",
+    results = process_tickets(SAMPLE_TICKETS)
 
-        "I'd like to enrol in the AWS certification course using my "
-        "L&D budget. How do I get approval?",
-
-        "Someone on my team has been making inappropriate comments "
-        "about my appearance. I need confidential help.",
-
-        "Can I take 3 weeks off in August? I want to check availability "
-        "before speaking to my manager."
-    ]
-
-    for ticket in demo_tickets:
-        result = classify_ticket(ticket)
+    print("\nSUMMARY:")
+    for result in results:
         escalate_flag = "🚨 ESCALATE" if result["escalate"] else "✓ Standard"
-        print(f"Ticket:     {ticket[:70]}...")
-        print(f"Route to:   {result['department']} | "
-              f"{result['priority'].upper()} priority | {escalate_flag}")
-        if result["escalate"]:
-            print(f"Reason:     {result['escalation_reason']}")
-            print(f"Response:   {result['suggested_response'][:100]}...")
-        print()
-        time.sleep(0.5)
+        print(f"Ticket {result['test_id']}: "
+              f"{result['department']} | "
+              f"{result['priority']} priority | "
+              f"{escalate_flag} | "
+              f"Sheet: {result.get('ticket_id', 'not logged')}")
 
     # ================================================
     # MODULE 3 — Benchmark Summary
