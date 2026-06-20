@@ -53,3 +53,26 @@ Ticket text:
 
 Respond only with valid JSON. No extra text.
 """
+
+HR_DEADLINE_RULES = {
+    "Payroll": {
+        "high": 2,      # hours
+        "medium": 24,
+        "low": 48
+    },
+    "HR_Ops": {
+        "high": 4,
+        "medium": 48,
+        "low": 72
+    },
+    "Learning_and_Development": {
+        "high": 24,
+        "medium": 72,
+        "low": 120
+    },
+    "Talent": {
+        "high": 8,
+        "medium": 48,
+        "low": 96
+    }
+}

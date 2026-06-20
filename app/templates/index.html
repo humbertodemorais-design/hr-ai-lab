@@ -226,9 +226,10 @@
       <div class="card">
         <h2>Live HR Operations Dashboard</h2>
         <p class="description">
-          Real-time metrics pulled from Google Sheets. 
-          Every ticket classified by Claude is logged and 
-          reflected here instantly.
+          Real-time metrics pulled from Google Sheets.
+          Every ticket classified by Claude is logged and
+          reflected here instantly — including SLA deadlines
+          and overdue alerts.
         </p>
 
         <button onclick="loadDashboard()" id="dashboard-btn">
@@ -242,7 +243,7 @@
         <div id="dashboard-content" class="hidden">
 
           <!-- Summary Cards -->
-          <div class="stats-grid" style="margin-top: 1.5rem;">
+          <div class="stats-grid" style="margin-top:1.5rem;">
             <div class="stat-card">
               <div class="stat-number" id="d-total">—</div>
               <div class="stat-label">Total tickets</div>
@@ -256,44 +257,64 @@
               <div class="stat-label">Escalation rate</div>
             </div>
             <div class="stat-card">
-              <div class="stat-number" id="d-depts">—</div>
-              <div class="stat-label">Departments active</div>
-            </div>
-            <div class="stat-card">
               <div class="stat-number" id="d-high">—</div>
               <div class="stat-label">High priority</div>
+            </div>
+            <div class="stat-card"
+                 style="border-color:#fecdd3;background:#fff1f2;">
+              <div class="stat-number" id="d-overdue"
+                   style="color:#dc2626;">—</div>
+              <div class="stat-label" style="color:#dc2626;">
+                Overdue tickets
+              </div>
             </div>
           </div>
 
           <!-- Charts Row -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr;
-                      gap: 1.5rem; margin-top: 1.5rem;">
-
-            <!-- Department Bar Chart -->
-            <div style="background: #f9f9f9; border: 1px solid #e5e5e5;
-                        border-radius: 8px; padding: 1.25rem;">
-              <h3 style="font-size: 0.9rem; font-weight: 600;
-                         margin-bottom: 1rem; color: #444;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;
+                      gap:1.5rem;margin-top:1.5rem;">
+            <div style="background:#f9f9f9;border:1px solid #e5e5e5;
+                        border-radius:8px;padding:1.25rem;">
+              <h3 style="font-size:0.9rem;font-weight:600;
+                         margin-bottom:1rem;color:#444;">
                 Tickets by department
               </h3>
               <canvas id="dept-chart" height="200"></canvas>
             </div>
-
-            <!-- Priority Pie Chart -->
-            <div style="background: #f9f9f9; border: 1px solid #e5e5e5;
-                        border-radius: 8px; padding: 1.25rem;">
-              <h3 style="font-size: 0.9rem; font-weight: 600;
-                         margin-bottom: 1rem; color: #444;">
+            <div style="background:#f9f9f9;border:1px solid #e5e5e5;
+                        border-radius:8px;padding:1.25rem;">
+              <h3 style="font-size:0.9rem;font-weight:600;
+                         margin-bottom:1rem;color:#444;">
                 Priority distribution
               </h3>
               <canvas id="priority-chart" height="200"></canvas>
             </div>
           </div>
 
+          <!-- SLA Chart -->
+          <div style="background:#f9f9f9;border:1px solid #e5e5e5;
+                      border-radius:8px;padding:1.25rem;
+                      margin-top:1.5rem;">
+            <h3 style="font-size:0.9rem;font-weight:600;
+                       margin-bottom:1rem;color:#444;">
+              SLA distribution
+            </h3>
+            <canvas id="sla-chart" height="100"></canvas>
+          </div>
+
+          <!-- Overdue Tickets -->
+          <div id="overdue-section" style="margin-top:1.5rem;">
+            <h3 style="font-size:0.95rem;font-weight:600;
+                       margin-bottom:0.75rem;color:#dc2626;">
+              ⚠️ Overdue tickets
+            </h3>
+            <div id="overdue-feed"></div>
+          </div>
+
           <!-- Recent Tickets Feed -->
-          <div style="margin-top: 1.5rem;">
-            <h3 style="font-size: 0.95rem; font-weight: 600;
-                       margin-bottom: 0.75rem;">
+          <div style="margin-top:1.5rem;">
+            <h3 style="font-size:0.95rem;font-weight:600;
+                       margin-bottom:0.75rem;">
               Recent tickets
             </h3>
             <div id="recent-feed"></div>
@@ -483,9 +504,15 @@
     let deptChart = null;
     let priorityChart = null;
 
+   let deptChart = null;
+    let priorityChart = null;
+    let slaChart = null;
+
     async function loadDashboard() {
-      document.getElementById('dashboard-loading').classList.remove('hidden');
-      document.getElementById('dashboard-content').classList.add('hidden');
+      document.getElementById('dashboard-loading')
+        .classList.remove('hidden');
+      document.getElementById('dashboard-content')
+        .classList.add('hidden');
       document.getElementById('dashboard-btn').disabled = true;
 
       try {
@@ -494,19 +521,21 @@
 
         // Summary cards
         document.getElementById('d-total').textContent = data.total;
-        document.getElementById('d-escalated').textContent = data.escalated;
-        document.getElementById('d-rate').textContent = data.escalation_rate + '%';
-        document.getElementById('d-depts').textContent =
-          Object.keys(data.departments).length;
+        document.getElementById('d-escalated').textContent =
+          data.escalated;
+        document.getElementById('d-rate').textContent =
+          data.escalation_rate + '%';
         document.getElementById('d-high').textContent =
           data.priorities['high'] || 0;
+        document.getElementById('d-overdue').textContent =
+          data.overdue_count || 0;
 
         // Department bar chart
         const deptLabels = Object.keys(data.departments);
         const deptValues = Object.values(data.departments);
-
         if (deptChart) deptChart.destroy();
-        const deptCtx = document.getElementById('dept-chart').getContext('2d');
+        const deptCtx = document.getElementById('dept-chart')
+          .getContext('2d');
         deptChart = new Chart(deptCtx, {
           type: 'bar',
           data: {
@@ -515,7 +544,7 @@
               label: 'Tickets',
               data: deptValues,
               backgroundColor: [
-                '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B'
+                '#3B82F6','#8B5CF6','#10B981','#F59E0B'
               ],
               borderRadius: 6,
               borderSkipped: false
@@ -535,23 +564,24 @@
           }
         });
 
-        // Priority pie chart
-        const priLabels = ['High', 'Medium', 'Low'];
+        // Priority doughnut chart
         const priValues = [
           data.priorities['high'] || 0,
           data.priorities['medium'] || 0,
           data.priorities['low'] || 0
         ];
-
         if (priorityChart) priorityChart.destroy();
-        const priCtx = document.getElementById('priority-chart').getContext('2d');
+        const priCtx = document.getElementById('priority-chart')
+          .getContext('2d');
         priorityChart = new Chart(priCtx, {
           type: 'doughnut',
           data: {
-            labels: priLabels,
+            labels: ['High', 'Medium', 'Low'],
             datasets: [{
               data: priValues,
-              backgroundColor: ['#EF4444', '#F59E0B', '#10B981'],
+              backgroundColor: [
+                '#EF4444','#F59E0B','#10B981'
+              ],
               borderWidth: 0,
               hoverOffset: 4
             }]
@@ -567,6 +597,85 @@
           }
         });
 
+        // SLA horizontal bar chart
+        const slaLabels = Object.keys(data.sla_breakdown);
+        const slaValues = Object.values(data.sla_breakdown);
+        if (slaChart) slaChart.destroy();
+        const slaCtx = document.getElementById('sla-chart')
+          .getContext('2d');
+        slaChart = new Chart(slaCtx, {
+          type: 'bar',
+          data: {
+            labels: slaLabels,
+            datasets: [{
+              label: 'Tickets',
+              data: slaValues,
+              backgroundColor: '#6366F1',
+              borderRadius: 4,
+              borderSkipped: false
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: { stepSize: 1 },
+                grid: { color: '#f0f0f0' }
+              },
+              y: { grid: { display: false } }
+            }
+          }
+        });
+
+        // Overdue tickets
+        const overdueSection = document.getElementById(
+          'overdue-section');
+        const overdueFeed = document.getElementById('overdue-feed');
+        overdueFeed.innerHTML = '';
+
+        if (data.overdue && data.overdue.length > 0) {
+          overdueSection.style.display = 'block';
+          data.overdue.forEach(t => {
+            overdueFeed.innerHTML += `
+              <div style="border:1px solid #fecdd3;border-radius:8px;
+                          padding:0.75rem 1rem;margin-bottom:0.5rem;
+                          background:#fff1f2;">
+                <div style="display:flex;justify-content:space-between;
+                            align-items:center;margin-bottom:0.35rem;">
+                  <div style="display:flex;gap:0.5rem;
+                              align-items:center;">
+                    <span style="font-size:0.8rem;font-weight:600;
+                                 color:#991b1b;">
+                      ${t.ticket_id}
+                    </span>
+                    <span style="background:#fecdd3;color:#991b1b;
+                                 padding:2px 8px;border-radius:12px;
+                                 font-size:11px;">
+                      ${t.department}
+                    </span>
+                    <span style="color:#dc2626;font-size:11px;
+                                 font-weight:600;">
+                      ${t.priority.toUpperCase()}
+                    </span>
+                  </div>
+                  <span style="font-size:11px;color:#dc2626;
+                               font-weight:600;">
+                    ⏰ Due: ${t.deadline} (${t.sla})
+                  </span>
+                </div>
+                <p style="font-size:0.85rem;color:#7f1d1d;margin:0;">
+                  ${t.ticket}...
+                </p>
+              </div>
+            `;
+          });
+        } else {
+          overdueSection.style.display = 'none';
+        }
+
         // Recent tickets feed
         const feed = document.getElementById('recent-feed');
         feed.innerHTML = '';
@@ -574,7 +683,8 @@
           const escalateBadge = t.escalate === 'YES'
             ? '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">🚨 ESCALATED</span>'
             : '';
-          const priorityColor = t.priority === 'high' ? '#dc2626'
+          const priorityColor = t.priority === 'high'
+            ? '#dc2626'
             : t.priority === 'medium' ? '#d97706' : '#16a34a';
 
           feed.innerHTML += `
@@ -585,7 +695,9 @@
                           align-items:center;margin-bottom:0.35rem;">
                 <div style="display:flex;gap:0.5rem;align-items:center;">
                   <span style="font-size:0.8rem;font-weight:600;
-                               color:#666;">${t.ticket_id}</span>
+                               color:#666;">
+                    ${t.ticket_id}
+                  </span>
                   <span style="background:#f0f0f0;padding:2px 8px;
                                border-radius:12px;font-size:11px;">
                     ${t.department}
@@ -595,8 +707,15 @@
                     ${t.priority.toUpperCase()}
                   </span>
                   ${escalateBadge}
+                  <span style="background:#ede9fe;color:#5b21b6;
+                               padding:2px 8px;border-radius:12px;
+                               font-size:11px;">
+                    ⏱ ${t.sla}
+                  </span>
                 </div>
-                <span style="font-size:11px;color:#999;">${t.timestamp}</span>
+                <span style="font-size:11px;color:#999;">
+                  Due: ${t.deadline}
+                </span>
               </div>
               <p style="font-size:0.85rem;color:#555;margin:0;">
                 ${t.ticket}...
@@ -605,12 +724,14 @@
           `;
         });
 
-        document.getElementById('dashboard-content').classList.remove('hidden');
+        document.getElementById('dashboard-content')
+          .classList.remove('hidden');
 
       } catch(e) {
         alert('Error loading dashboard: ' + e.message);
       } finally {
-        document.getElementById('dashboard-loading').classList.add('hidden');
+        document.getElementById('dashboard-loading')
+          .classList.add('hidden');
         document.getElementById('dashboard-btn').disabled = false;
       }
     }

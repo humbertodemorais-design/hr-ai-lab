@@ -75,6 +75,7 @@ def benchmark():
 def dashboard_data():
     try:
         from integrations.sheets import get_sheet
+        from datetime import datetime
         sheet = get_sheet(os.getenv("GOOGLE_SHEET_ID"))
         all_data = sheet.get_all_records()
 
@@ -85,6 +86,8 @@ def dashboard_data():
                 "escalation_rate": 0,
                 "departments": {},
                 "priorities": {},
+                "sla_breakdown": {},
+                "overdue": [],
                 "recent_tickets": []
             })
 
@@ -101,6 +104,36 @@ def dashboard_data():
             pri = row.get("Priority", "unknown").lower()
             priorities[pri] = priorities.get(pri, 0) + 1
 
+        # SLA breakdown
+        sla_breakdown = {}
+        overdue = []
+        now = datetime.now()
+
+        for row in all_data:
+            sla = row.get("SLA", "")
+            sla_breakdown[sla] = sla_breakdown.get(sla, 0) + 1
+
+            # Check if overdue
+            deadline_str = row.get("Deadline", "")
+            if deadline_str:
+                try:
+                    deadline = datetime.strptime(
+                        deadline_str, "%Y-%m-%d %H:%M"
+                    )
+                    if deadline < now:
+                        overdue.append({
+                            "ticket_id": row.get("Ticket ID", ""),
+                            "department": row.get("Department", "")
+                                            .replace("_", " "),
+                            "priority": row.get("Priority", ""),
+                            "deadline": deadline_str,
+                            "sla": sla,
+                            "ticket": row.get(
+                                "Original Ticket", "")[:80]
+                        })
+                except:
+                    pass
+
         recent = list(reversed(all_data[-10:]))
         recent_tickets = [{
             "ticket_id": r.get("Ticket ID", ""),
@@ -108,15 +141,21 @@ def dashboard_data():
             "priority": r.get("Priority", ""),
             "escalate": r.get("Escalate", "No"),
             "timestamp": r.get("Timestamp", ""),
+            "deadline": r.get("Deadline", ""),
+            "sla": r.get("SLA", ""),
             "ticket": r.get("Original Ticket", "")[:80]
         } for r in recent]
 
         return jsonify({
             "total": total,
             "escalated": escalated,
-            "escalation_rate": round((escalated/total)*100, 1) if total > 0 else 0,
+            "escalation_rate": round(
+                (escalated/total)*100, 1) if total > 0 else 0,
             "departments": departments,
             "priorities": priorities,
+            "sla_breakdown": sla_breakdown,
+            "overdue_count": len(overdue),
+            "overdue": overdue,
             "recent_tickets": recent_tickets
         })
 
