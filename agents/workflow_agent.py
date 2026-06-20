@@ -4,6 +4,7 @@ import json
 from dotenv import load_dotenv
 from prompts.templates import HR_TICKET_CLASSIFIER
 from integrations.sheets import log_to_sheet
+from integrations.dashboard import update_dashboard
 
 load_dotenv()
 
@@ -55,4 +56,9 @@ def process_tickets(tickets):
               f"{'🚨 ESCALATE' if result['escalate'] else '✓ Standard'}")
 
         results.append(result)
+
+    # Update dashboard ONCE after ALL tickets processed
+    print("\nUpdating dashboard...")
+    update_dashboard(SHEET_ID)
+
     return results
