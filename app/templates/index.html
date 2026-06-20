@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR AI Automation Lab</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <h1>HR AI Automation Lab</h1>
+      <p class="subtitle">Claude · Gemini · Python · Built by Humberto Morais</p>
+    </div>
+  </header>
+
+  <nav>
+    <button class="tab-btn active" onclick="showTab('policy')">
+      🤖 Policy Q&A
+    </button>
+    <button class="tab-btn" onclick="showTab('classifier')">
+      🎫 Ticket Router
+    </button>
+    <button class="tab-btn" onclick="showTab('benchmark')">
+      📊 Benchmark Results
+    </button>
+  </nav>
+
+  <main>
+
+    <!-- TAB 1: Policy Q&A -->
+    <div id="tab-policy" class="tab active">
+      <div class="card">
+        <h2>HR Knowledge Agent</h2>
+        <p class="description">
+          Ask any HR policy question. The agent answers using only the
+          company policy documents — no general knowledge, no hallucination.
+        </p>
+
+        <div class="input-group">
+          <textarea id="policy-input" rows="3"
+            placeholder="e.g. Can I work remotely from another country? How many days of leave can I carry over?">
+          </textarea>
+          <button onclick="askPolicy()" id="policy-btn">
+            Ask Claude
+          </button>
+        </div>
+
+        <div class="examples">
+          <span class="label">Try these:</span>
+          <button class="example-btn" onclick="fillPolicy(
+            'Can I carry over 10 days of unused annual leave?')">
+            Carry over 10 days?
+          </button>
+          <button class="example-btn" onclick="fillPolicy(
+            'Can I work remotely from another country and for how long?')">
+            Remote from abroad?
+          </button>
+          <button class="example-btn" onclick="fillPolicy(
+            'What happens to my bonus if I resign in February?')">
+            Resign before bonus?
+          </button>
+          <button class="example-btn" onclick="fillPolicy(
+            'What is my L&D budget and how do I use it?')">
+            L&D budget?
+          </button>
+        </div>
+
+        <div id="policy-result" class="result hidden">
+          <div class="result-header">
+            <span class="badge" id="policy-confidence"></span>
+            <span class="policy-area" id="policy-area"></span>
+          </div>
+          <div class="answer" id="policy-answer"></div>
+          <div class="follow-up">
+            <span class="label">Suggested next step:</span>
+            <span id="policy-followup"></span>
+          </div>
+        </div>
+
+        <div id="policy-loading" class="loading hidden">
+          Claude is thinking...
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Ticket Classifier -->
+    <div id="tab-classifier" class="tab hidden">
+      <div class="card">
+        <h2>Workflow Classifier & Router</h2>
+        <p class="description">
+          Submit an HR support ticket. The agent classifies it, assigns
+          priority, routes it to the correct department, and detects
+          whether it needs immediate escalation.
+        </p>
+
+        <div class="input-group">
+          <textarea id="classifier-input" rows="3"
+            placeholder="e.g. I haven't received my salary this month...">
+          </textarea>
+          <button onclick="classifyTicket()" id="classifier-btn">
+            Classify Ticket
+          </button>
+        </div>
+
+        <div class="examples">
+          <span class="label">Try these:</span>
+          <button class="example-btn" onclick="fillClassifier(
+            `I haven't received my salary this month. It's been 5 days past payday and I'm really worried.`)">
+            Missing salary
+          </button>
+          <button class="example-btn" onclick="fillClassifier(
+            `Someone on my team has been making inappropriate comments about my appearance repeatedly.`)">
+            Harassment complaint
+          </button>
+          <button class="example-btn" onclick="fillClassifier(
+            `I'd like to enrol in the AWS certification course using my L&D budget.`)">
+            Training request
+          </button>
+          <button class="example-btn" onclick="fillClassifier(
+            `I have been passed over for promotion three times and believe it may be related to my age.`)">
+            Age discrimination
+          </button>
+        </div>
+
+        <div id="classifier-result" class="result hidden">
+          <div class="route-header">
+            <div class="route-item">
+              <span class="label">Department</span>
+              <span class="route-value" id="cls-department"></span>
+            </div>
+            <div class="route-item">
+              <span class="label">Priority</span>
+              <span class="route-value" id="cls-priority"></span>
+            </div>
+            <div class="route-item">
+              <span class="label">Escalate</span>
+              <span class="route-value" id="cls-escalate"></span>
+            </div>
+            <div class="route-item">
+              <span class="label">Confidence</span>
+              <span class="route-value" id="cls-confidence"></span>
+            </div>
+          </div>
+          <div id="cls-escalation-box" class="escalation-box hidden">
+            <strong>Escalation reason:</strong>
+            <span id="cls-escalation-reason"></span>
+          </div>
+          <div class="answer" id="cls-response"></div>
+        </div>
+
+        <div id="classifier-loading" class="loading hidden">
+          Classifying ticket...
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Benchmark -->
+    <div id="tab-benchmark" class="tab hidden">
+      <div class="card">
+        <h2>Benchmark Evaluation Results</h2>
+        <p class="description">
+          Claude was evaluated across 8 test cases in three categories:
+          straightforward retrieval, boundary cases (hallucination detection),
+          and ambiguous cases (confidence behaviour).
+        </p>
+
+        <button onclick="loadBenchmark()" id="benchmark-btn">
+          Load Results
+        </button>
+
+        <div id="benchmark-loading" class="loading hidden">
+          Loading results...
+        </div>
+
+        <div id="benchmark-result" class="hidden">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-number" id="stat-total"></div>
+              <div class="stat-label">Total tests</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="stat-json"></div>
+              <div class="stat-label">JSON compliance</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="stat-area"></div>
+              <div class="stat-label">Policy area accuracy</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="stat-boundary"></div>
+              <div class="stat-label">Hallucination check</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="stat-latency"></div>
+              <div class="stat-label">Avg latency</div>
+            </div>
+          </div>
+
+          <table id="benchmark-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Question</th>
+                <th>Latency</th>
+                <th>JSON</th>
+                <th>Accurate</th>
+                <th>Area</th>
+              </tr>
+            </thead>
+            <tbody id="benchmark-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>HR AI Automation Lab ·
+      <a href="https://github.com/humbertodemorais-design/hr-ai-lab"
+         target="_blank">
+        github.com/humbertodemorais-design/hr-ai-lab
+      </a>
+    </p>
+  </footer>
+
+  <script>
+    function showTab(name) {
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.add('hidden');
+        t.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+      });
+      document.getElementById('tab-' + name)
+        .classList.remove('hidden');
+      event.target.classList.add('active');
+    }
+
+    function fillPolicy(text) {
+      document.getElementById('policy-input').value = text;
+    }
+
+    function fillClassifier(text) {
+      document.getElementById('classifier-input').value = text;
+    }
+
+    async function askPolicy() {
+      const question = document.getElementById('policy-input').value.trim();
+      if (!question) return;
+
+      document.getElementById('policy-result').classList.add('hidden');
+      document.getElementById('policy-loading').classList.remove('hidden');
+      document.getElementById('policy-btn').disabled = true;
+
+      try {
+        const res = await fetch('/api/policy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+        const data = await res.json();
+
+        document.getElementById('policy-answer').textContent = data.answer;
+        document.getElementById('policy-followup').textContent =
+          data.follow_up_suggestion;
+
+        const conf = document.getElementById('policy-confidence');
+        conf.textContent = data.confidence.toUpperCase();
+        conf.className = 'badge badge-' + data.confidence;
+
+        document.getElementById('policy-area').textContent =
+          data.policy_area;
+
+        document.getElementById('policy-result').classList.remove('hidden');
+      } catch (e) {
+        alert('Error: ' + e.message);
+      } finally {
+        document.getElementById('policy-loading').classList.add('hidden');
+        document.getElementById('policy-btn').disabled = false;
+      }
+    }
+
+    async function classifyTicket() {
+      const ticket = document.getElementById('classifier-input').value.trim();
+      if (!ticket) return;
+
+      document.getElementById('classifier-result').classList.add('hidden');
+      document.getElementById('classifier-loading').classList.remove('hidden');
+      document.getElementById('classifier-btn').disabled = true;
+
+      try {
+        const res = await fetch('/api/classify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticket })
+        });
+        const data = await res.json();
+
+        document.getElementById('cls-department').textContent =
+          data.department.replace('_', ' ');
+        document.getElementById('cls-confidence').textContent =
+          data.confidence.toUpperCase();
+
+        const priority = document.getElementById('cls-priority');
+        priority.textContent = data.priority.toUpperCase();
+        priority.className = 'route-value priority-' + data.priority;
+
+        const escalate = document.getElementById('cls-escalate');
+        escalate.textContent = data.escalate ? '🚨 YES' : '✓ No';
+        escalate.className = 'route-value ' +
+          (data.escalate ? 'escalate-yes' : 'escalate-no');
+
+        const escBox = document.getElementById('cls-escalation-box');
+        if (data.escalate) {
+          document.getElementById('cls-escalation-reason').textContent =
+            data.escalation_reason;
+          escBox.classList.remove('hidden');
+        } else {
+          escBox.classList.add('hidden');
+        }
+
+        document.getElementById('cls-response').textContent =
+          data.suggested_response;
+        document.getElementById('classifier-result').classList.remove('hidden');
+
+      } catch (e) {
+        alert('Error: ' + e.message);
+      } finally {
+        document.getElementById('classifier-loading').classList.add('hidden');
+        document.getElementById('classifier-btn').disabled = false;
+      }
+    }
+
+    async function loadBenchmark() {
+      document.getElementById('benchmark-loading').classList.remove('hidden');
+      document.getElementById('benchmark-btn').disabled = true;
+
+      try {
+        const res = await fetch('/api/benchmark');
+        const data = await res.json();
+
+        document.getElementById('stat-total').textContent = data.total;
+        document.getElementById('stat-json').textContent =
+          data.valid_json + '/' + data.total;
+        document.getElementById('stat-area').textContent =
+          data.correct_area + '/' + data.total;
+        document.getElementById('stat-boundary').textContent =
+          data.boundary_passed + '/3';
+        document.getElementById('stat-latency').textContent =
+          data.avg_latency + 's';
+
+        const tbody = document.getElementById('benchmark-tbody');
+        tbody.innerHTML = '';
+        data.results.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${r.test_id}</td>
+            <td><span class="category-badge cat-${r.category.toLowerCase()}">
+              ${r.category}</span></td>
+            <td>${r.question}</td>
+            <td>${r.claude_latency_s}s</td>
+            <td>${r.claude_valid_json ? '✓' : '✗'}</td>
+            <td>${r.claude_answer_accurate === 'True' ||
+                  r.claude_answer_accurate === true ? '✓' : 'N/A'}</td>
+            <td>${r.claude_correct_area ? '✓' : '✗'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById('benchmark-result').classList.remove('hidden');
+      } catch (e) {
+        alert('Error loading benchmark: ' + e.message);
+      } finally {
+        document.getElementById('benchmark-loading').classList.add('hidden');
+      }
+    }
+  </script>
+
+</body>
+</html>
