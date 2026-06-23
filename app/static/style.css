@@ -2,13 +2,13 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f5f5f5;
+  background: #f9fbf9;
   color: #1a1a1a;
   min-height: 100vh;
 }
 
 header {
-  background: #1a1a1a;
+  background: #181e48;
   color: white;
   padding: 2rem;
   text-align: center;
@@ -17,7 +17,7 @@ header {
 header h1 { font-size: 1.8rem; font-weight: 600; }
 
 .subtitle {
-  color: #888;
+  color: #aca9a9;
   font-size: 0.9rem;
   margin-top: 0.4rem;
 }
@@ -50,7 +50,7 @@ nav {
   font-weight: 500;
 }
 
-main { max-width: 860px; margin: 2rem auto; padding: 0 1.5rem; }
+main { max-width: 860px; margin: 2rem auto; padding: 0 1.5rem; min-height: 600px; }
 
 .tab { display: block; }
 .tab.hidden { display: none; }
@@ -216,11 +216,11 @@ button:disabled { background: #999; cursor: not-allowed; }
   color: #1a1a1a;
 }
 
-.priority-high { color: #dc2626; }
-.priority-medium { color: #d97706; }
-.priority-low { color: #16a34a; }
-.escalate-yes { color: #dc2626; }
-.escalate-no { color: #16a34a; }
+.priority-high { color: #f72d2d; }
+.priority-medium { color: #f7a547; }
+.priority-low { color: #0ec651; }
+.escalate-yes { color: #e13232; }
+.escalate-no { color: #1fd461; }
 
 .escalation-box {
   background: #fff1f2;

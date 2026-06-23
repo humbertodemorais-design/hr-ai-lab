@@ -162,5 +162,84 @@ def dashboard_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/onboarding/intake", methods=["POST"])
+def onboarding_intake():
+    try:
+        from agents.onboarding_agent import run_intake_agent
+        data = request.get_json()
+        result = run_intake_agent(data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/onboarding/compliance", methods=["POST"])
+def onboarding_compliance():
+    try:
+        from agents.onboarding_agent import run_compliance_agent
+        body = request.get_json()
+        result = run_compliance_agent(
+            body["new_hire_data"],
+            body["intake_result"]
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/onboarding/setup", methods=["POST"])
+def onboarding_setup():
+    try:
+        from agents.onboarding_agent import run_setup_agent
+        body = request.get_json()
+        result = run_setup_agent(
+            body["new_hire_data"],
+            body["intake_result"],
+            body["compliance_result"]
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/onboarding/log", methods=["POST"])
+def onboarding_log():
+    try:
+        from agents.onboarding_agent import log_onboarding_to_sheet
+        body = request.get_json()
+        log_onboarding_to_sheet(
+            body["new_hire_data"],
+            body["results"],
+            os.getenv("GOOGLE_SHEET_ID")
+        )
+        return jsonify({"status": "logged"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/payroll/analyse", methods=["POST"])
+def payroll_analyse():
+    try:
+        from agents.payroll_agent import analyse_payroll
+        from data.sample_payroll import SAMPLE_PAYROLL
+        body = request.get_json()
+        data = body.get("data", SAMPLE_PAYROLL)
+        result = analyse_payroll(data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/payroll/audit", methods=["POST"])
+def payroll_audit():
+    try:
+        from agents.payroll_agent import log_payroll_audit
+        body = request.get_json()
+        log_payroll_audit(
+            body["payroll_period"],
+            body["exceptions"],
+            body["approvals"],
+            os.getenv("GOOGLE_SHEET_ID")
+        )
+        return jsonify({"status": "logged"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=8080, host="127.0.0.1")

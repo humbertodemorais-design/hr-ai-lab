@@ -3,21 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HR AI Automation Lab</title>
+  <title>Konecta — HR AI Automation Lab</title>
   <link rel="stylesheet" href="/static/style.css">
+  <style>
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+  </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-
 </head>
 <body>
 
   <header>
     <div class="header-inner">
-      <h1>HR AI Automation Lab</h1>
+      <h1>Konecta — HR AI Automation Lab</h1>
       <p class="subtitle">Claude · Gemini · Python · Built by Humberto Morais</p>
     </div>
   </header>
 
-<nav>
+  <nav>
+    <button class="tab-btn" onclick="showTab('payroll', this)">
+      💰 Payroll Exceptions
+    </button>
+    <button class="tab-btn" onclick="showTab('onboarding', this)">
+      🚀 Onboarding Pipeline
+    </button>
     <button class="tab-btn active" onclick="showTab('policy', this)">
       🤖 Policy Q&A
     </button>
@@ -30,216 +41,932 @@
     <button class="tab-btn" onclick="showTab('benchmark', this)">
       🔬 Benchmark
     </button>
-</nav>
+  </nav>
 
   <main>
 
     <!-- TAB 1: Policy Q&A -->
     <div id="tab-policy" class="tab active">
-      <div class="card">
-        <h2>HR Knowledge Agent</h2>
-        <p class="description">
-          Ask any HR policy question. The agent answers using only the
-          company policy documents — no general knowledge, no hallucination.
-        </p>
+      <div class="card" style="padding:0;overflow:hidden;
+                                display:flex;flex-direction:column;
+                                height:620px;">
 
-        <div class="input-group">
-          <textarea id="policy-input" rows="3"
-            placeholder="e.g. Can I work remotely from another country? How many days of leave can I carry over?">
-          </textarea>
-          <button onclick="askPolicy()" id="policy-btn">
-            Ask Claude
-          </button>
-        </div>
-
-        <div class="examples">
-          <span class="label">Try these:</span>
-          <button class="example-btn" onclick="fillPolicy(
-            'Can I carry over 10 days of unused annual leave?')">
-            Carry over 10 days?
-          </button>
-          <button class="example-btn" onclick="fillPolicy(
-            'Can I work remotely from another country and for how long?')">
-            Remote from abroad?
-          </button>
-          <button class="example-btn" onclick="fillPolicy(
-            'What happens to my bonus if I resign in February?')">
-            Resign before bonus?
-          </button>
-          <button class="example-btn" onclick="fillPolicy(
-            'What is my L&D budget and how do I use it?')">
-            L&D budget?
-          </button>
-        </div>
-
-        <div id="policy-result" class="result hidden">
-          <div class="result-header">
-            <span class="badge" id="policy-confidence"></span>
-            <span class="policy-area" id="policy-area"></span>
+        <!-- Chat header -->
+        <div style="padding:1rem 1.5rem;border-bottom:1px solid #e5e5e5;
+                    display:flex;align-items:center;gap:0.75rem;
+                    background:white;flex-shrink:0;">
+          <div style="width:36px;height:36px;border-radius:50%;
+                      background:#1a1a1a;display:flex;align-items:center;
+                      justify-content:center;font-size:16px;">🤖</div>
+          <div>
+            <div style="font-weight:600;font-size:0.9rem;color:#1a1a1a;">
+              HR Policy Assistant
+            </div>
+            <div style="font-size:0.72rem;color:#16a34a;
+                        display:flex;align-items:center;gap:4px;">
+              <span style="width:6px;height:6px;border-radius:50%;
+                           background:#16a34a;display:inline-block;">
+              </span>
+              Powered by Claude · Konecta Policy Documents
+            </div>
           </div>
-          <div class="answer" id="policy-answer"></div>
-          <div class="follow-up">
-            <span class="label">Suggested next step:</span>
-            <span id="policy-followup"></span>
+          <div style="margin-left:auto;font-size:0.72rem;color:#aaa;">
+            Answers grounded in policy only
           </div>
         </div>
 
-        <div id="policy-loading" class="loading hidden">
-          Claude is thinking...
+        <!-- Chat messages -->
+        <div id="policy-chat"
+             style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;
+                    display:flex;flex-direction:column;gap:1.25rem;
+                    background:#f9f9f9;">
+
+          <!-- Welcome message -->
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;">
+            <div style="width:32px;height:32px;border-radius:50%;
+                        background:#1a1a1a;display:flex;align-items:center;
+                        justify-content:center;font-size:14px;flex-shrink:0;">
+              🤖
+            </div>
+            <div style="max-width:85%;">
+              <div style="background:white;border:1px solid #e5e5e5;
+                          border-radius:4px 18px 18px 18px;
+                          padding:0.85rem 1.1rem;font-size:0.875rem;
+                          line-height:1.6;color:#1a1a1a;
+                          box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+                Hi! I'm your HR Policy Assistant. I can answer questions
+                about Konecta's policies — leave, remote work, compensation,
+                performance, and more. What would you like to know?
+              </div>
+              <div style="font-size:10px;color:#aaa;margin-top:4px;
+                          padding-left:4px;">
+                HR Policy Assistant · Just now
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick suggestion pills -->
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem;
+                      padding-left:44px;">
+            <button onclick="fillAndSendPolicy('How many days of annual leave do I get?')"
+                    style="background:white;border:1px solid #e2e8f0;
+                           border-radius:20px;padding:0.35rem 0.85rem;
+                           font-size:0.78rem;color:#475569;cursor:pointer;
+                           transition:all 0.15s;"
+                    onmouseover="this.style.borderColor='#1a1a1a';this.style.color='#1a1a1a';"
+                    onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#475569';">
+              Annual leave entitlement
+            </button>
+            <button onclick="fillAndSendPolicy('Can I work remotely from another country?')"
+                    style="background:white;border:1px solid #e2e8f0;
+                           border-radius:20px;padding:0.35rem 0.85rem;
+                           font-size:0.78rem;color:#475569;cursor:pointer;
+                           transition:all 0.15s;"
+                    onmouseover="this.style.borderColor='#1a1a1a';this.style.color='#1a1a1a';"
+                    onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#475569';">
+              Remote work abroad
+            </button>
+            <button onclick="fillAndSendPolicy('What happens to my bonus if I resign?')"
+                    style="background:white;border:1px solid #e2e8f0;
+                           border-radius:20px;padding:0.35rem 0.85rem;
+                           font-size:0.78rem;color:#475569;cursor:pointer;
+                           transition:all 0.15s;"
+                    onmouseover="this.style.borderColor='#1a1a1a';this.style.color='#1a1a1a';"
+                    onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#475569';">
+              Bonus if I resign
+            </button>
+            <button onclick="fillAndSendPolicy('What is my L&D budget?')"
+                    style="background:white;border:1px solid #e2e8f0;
+                           border-radius:20px;padding:0.35rem 0.85rem;
+                           font-size:0.78rem;color:#475569;cursor:pointer;
+                           transition:all 0.15s;"
+                    onmouseover="this.style.borderColor='#1a1a1a';this.style.color='#1a1a1a';"
+                    onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#475569';">
+              L&amp;D budget
+            </button>
+            <button onclick="fillAndSendPolicy('Can I carry over 10 days of unused leave?')"
+                    style="background:white;border:1px solid #e2e8f0;
+                           border-radius:20px;padding:0.35rem 0.85rem;
+                           font-size:0.78rem;color:#475569;cursor:pointer;
+                           transition:all 0.15s;"
+                    onmouseover="this.style.borderColor='#1a1a1a';this.style.color='#1a1a1a';"
+                    onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#475569';">
+              Carry over 10 days?
+            </button>
+          </div>
+
         </div>
+
+        <!-- Input bar -->
+        <div style="padding:1rem 1.5rem;border-top:1px solid #e5e5e5;
+                    background:white;flex-shrink:0;">
+          <div style="display:flex;gap:0.5rem;align-items:flex-end;
+                      background:#f4f4f5;border-radius:24px;
+                      padding:0.5rem 0.5rem 0.5rem 1rem;
+                      border:1.5px solid transparent;
+                      transition:border-color 0.15s;"
+               id="policy-input-wrap">
+            <textarea id="policy-input" rows="1"
+              placeholder="Ask an HR policy question..."
+              style="flex:1;background:transparent;border:none;
+                     outline:none;font-size:0.875rem;font-family:inherit;
+                     resize:none;line-height:1.5;max-height:120px;
+                     overflow-y:auto;padding:0.2rem 0;"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askPolicy();}"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';"
+              onfocus="document.getElementById('policy-input-wrap').style.borderColor='#1a1a1a';"
+              onblur="document.getElementById('policy-input-wrap').style.borderColor='transparent';">
+            </textarea>
+            <button onclick="askPolicy()" id="policy-btn"
+                    style="width:36px;height:36px;border-radius:50%;
+                           background:#1a1a1a;color:white;border:none;
+                           cursor:pointer;display:flex;align-items:center;
+                           justify-content:center;flex-shrink:0;
+                           font-size:16px;transition:background 0.15s;"
+                    onmouseover="this.style.background='#333';"
+                    onmouseout="this.style.background='#1a1a1a';">
+              ↑
+            </button>
+          </div>
+          <div style="font-size:0.68rem;color:#aaa;text-align:center;
+                      margin-top:0.5rem;">
+            Answers are based solely on Konecta's HR policy documents
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <!-- TAB 2: Ticket Classifier -->
+   <!-- TAB 2: Ticket Classifier -->
     <div id="tab-classifier" class="tab hidden">
-      <div class="card">
-        <h2>Workflow Classifier & Router</h2>
-        <p class="description">
-          Submit an HR support ticket. The agent classifies it, assigns
-          priority, routes it to the correct department, and detects
-          whether it needs immediate escalation.
-        </p>
+      <div class="card" style="padding:0;overflow:hidden;
+                                display:flex;flex-direction:column;
+                                height:620px;">
 
-        <div class="input-group">
-          <textarea id="classifier-input" rows="3"
-            placeholder="e.g. I haven't received my salary this month...">
-          </textarea>
-          <button onclick="classifyTicket()" id="classifier-btn">
-            Classify Ticket
-          </button>
-        </div>
-
-        <div class="examples">
-          <span class="label">Try these:</span>
-          <button class="example-btn" onclick="fillClassifier(
-            `I haven't received my salary this month. It's been 5 days past payday and I'm really worried.`)">
-            Missing salary
-          </button>
-          <button class="example-btn" onclick="fillClassifier(
-            `Someone on my team has been making inappropriate comments about my appearance repeatedly.`)">
-            Harassment complaint
-          </button>
-          <button class="example-btn" onclick="fillClassifier(
-            `I'd like to enrol in the AWS certification course using my L&D budget.`)">
-            Training request
-          </button>
-          <button class="example-btn" onclick="fillClassifier(
-            `I have been passed over for promotion three times and believe it may be related to my age.`)">
-            Age discrimination
-          </button>
-        </div>
-
-        <div id="classifier-result" class="result hidden">
-          <div class="route-header">
-            <div class="route-item">
-              <span class="label">Department</span>
-              <span class="route-value" id="cls-department"></span>
+        <!-- Chat header -->
+        <div style="padding:1rem 1.5rem;border-bottom:1px solid #e5e5e5;
+                    display:flex;align-items:center;gap:0.75rem;
+                    background:white;flex-shrink:0;">
+          <div style="width:36px;height:36px;border-radius:50%;
+                      background:#1d4ed8;display:flex;align-items:center;
+                      justify-content:center;font-size:16px;">🎫</div>
+          <div>
+            <div style="font-weight:600;font-size:0.9rem;color:#1a1a1a;">
+              HR Service Desk
             </div>
-            <div class="route-item">
-              <span class="label">Priority</span>
-              <span class="route-value" id="cls-priority"></span>
-            </div>
-            <div class="route-item">
-              <span class="label">Escalate</span>
-              <span class="route-value" id="cls-escalate"></span>
-            </div>
-            <div class="route-item">
-              <span class="label">Confidence</span>
-              <span class="route-value" id="cls-confidence"></span>
+            <div style="font-size:0.72rem;color:#16a34a;
+                        display:flex;align-items:center;gap:4px;">
+              <span style="width:6px;height:6px;border-radius:50%;
+                           background:#16a34a;display:inline-block;">
+              </span>
+              Powered by Claude · Auto-classification & SLA assignment
             </div>
           </div>
-          <div id="cls-escalation-box" class="escalation-box hidden">
-            <strong>Escalation reason:</strong>
-            <span id="cls-escalation-reason"></span>
+          <div style="margin-left:auto;font-size:0.72rem;color:#aaa;">
+            Jira · ServiceNow · Workday · SAP ready
           </div>
-          <div class="answer" id="cls-response"></div>
         </div>
 
-        <div id="classifier-loading" class="loading hidden">
-          Classifying ticket...
+        <!-- Chat messages -->
+        <div id="classifier-chat"
+             style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;
+                    display:flex;flex-direction:column;gap:1.25rem;
+                    background:#f9f9f9;">
+
+          <!-- Welcome message -->
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;">
+            <div style="width:32px;height:32px;border-radius:50%;
+                        background:#1d4ed8;display:flex;align-items:center;
+                        justify-content:center;font-size:14px;flex-shrink:0;">
+              🎫
+            </div>
+            <div style="max-width:85%;">
+              <div style="background:white;border:1px solid #e5e5e5;
+                          border-radius:4px 18px 18px 18px;
+                          padding:0.85rem 1.1rem;font-size:0.875rem;
+                          line-height:1.6;color:#1a1a1a;
+                          box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+                Hi! I'm the HR Service Desk. Describe your request and
+                I'll classify it, assign the right team, set a priority
+                and SLA deadline, and flag anything that needs urgent
+                attention. How can I help you today?
+              </div>
+              <div style="font-size:10px;color:#aaa;margin-top:4px;
+                          padding-left:4px;">
+                HR Service Desk · Just now
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick suggestion pills -->
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem;
+                      padding-left:44px;">
+            <button onclick="fillAndSendClassifier(`I haven't received my salary this month. It's been 5 days past payday.`)"
+                    style="background:white;border:1px solid #fecdd3;
+                           border-radius:20px;padding:0.35rem 0.85rem;
+                           font-size:0.78rem;color:#991b1b;cursor:pointer;
+                           transition:all 0.15s;"
+                    onmouseover="this.style.background='#fff1f2';"
+                    onmouseout="this.style.background='white';">
+              🚨 Missing salary
+            </button>
+            <button onclick="fillAndSendClassifier(`Someone on my team has been making inappropriate comments about my appearance.`)"
+                    style="background:white;border:1px solid #fecdd3;
+                           border-radius:20px;padding:0.35rem 0.85rem;
+                           font-size:0.78rem;color:#991b1b;cursor:pointer;
+                           transition:all 0.15s;"
+                    onmouseover="this.style.background='#fff1f2';"
+                    onmouseout="this.style.background='white';">
+              🚨 Harassment complaint
+            </button>
+            <button onclick="fillAndSendClassifier(`I'd like to enrol in the AWS certification course using my L&D budget.`)"
+                    style="background:white;border:1px solid #e2e8f0;
+                           border-radius:20px;padding:0.35rem 0.85rem;
+                           font-size:0.78rem;color:#475569;cursor:pointer;
+                           transition:all 0.15s;"
+                    onmouseover="this.style.background='#f8fafc';"
+                    onmouseout="this.style.background='white';">
+              Training request
+            </button>
+            <button onclick="fillAndSendClassifier(`I need a copy of my employment contract for a mortgage application.`)"
+                    style="background:white;border:1px solid #e2e8f0;
+                           border-radius:20px;padding:0.35rem 0.85rem;
+                           font-size:0.78rem;color:#475569;cursor:pointer;
+                           transition:all 0.15s;"
+                    onmouseover="this.style.background='#f8fafc';"
+                    onmouseout="this.style.background='white';">
+              Contract copy
+            </button>
+            <button onclick="fillAndSendClassifier(`I have been passed over for promotion three times and believe it may be age discrimination.`)"
+                    style="background:white;border:1px solid #fecdd3;
+                           border-radius:20px;padding:0.35rem 0.85rem;
+                           font-size:0.78rem;color:#991b1b;cursor:pointer;
+                           transition:all 0.15s;"
+                    onmouseover="this.style.background='#fff1f2';"
+                    onmouseout="this.style.background='white';">
+              🚨 Age discrimination
+            </button>
+          </div>
+
         </div>
+
+        <!-- Input bar -->
+        <div style="padding:1rem 1.5rem;border-top:1px solid #e5e5e5;
+                    background:white;flex-shrink:0;">
+          <div style="display:flex;gap:0.5rem;align-items:flex-end;
+                      background:#f4f4f5;border-radius:24px;
+                      padding:0.5rem 0.5rem 0.5rem 1rem;
+                      border:1.5px solid transparent;
+                      transition:border-color 0.15s;"
+               id="classifier-input-wrap">
+            <textarea id="classifier-input" rows="1"
+              placeholder="Describe your HR request..."
+              style="flex:1;background:transparent;border:none;
+                     outline:none;font-size:0.875rem;font-family:inherit;
+                     resize:none;line-height:1.5;max-height:120px;
+                     overflow-y:auto;padding:0.2rem 0;"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();classifyTicket();}"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';"
+              onfocus="document.getElementById('classifier-input-wrap').style.borderColor='#1d4ed8';"
+              onblur="document.getElementById('classifier-input-wrap').style.borderColor='transparent';">
+            </textarea>
+            <button onclick="classifyTicket()" id="classifier-btn"
+                    style="width:36px;height:36px;border-radius:50%;
+                           background:#1d4ed8;color:white;border:none;
+                           cursor:pointer;display:flex;align-items:center;
+                           justify-content:center;flex-shrink:0;
+                           font-size:16px;transition:background 0.15s;"
+                    onmouseover="this.style.background='#1e40af';"
+                    onmouseout="this.style.background='#1d4ed8';">
+              ↑
+            </button>
+          </div>
+          <div style="font-size:0.68rem;color:#aaa;text-align:center;
+                      margin-top:0.5rem;">
+            Designed for integration with Jira · ServiceNow ·
+            Workday · SAP SuccessFactors
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <!-- TAB 3: Benchmark -->
-    <div id="tab-benchmark" class="tab hidden">
+<!-- TAB: Payroll Exception Detector -->
+    <div id="tab-payroll" class="tab hidden">
       <div class="card">
-        <h2>Benchmark Evaluation Results</h2>
-        <p class="description">
-          Claude was evaluated across 8 test cases in three categories:
-          straightforward retrieval, boundary cases (hallucination detection),
-          and ambiguous cases (confidence behaviour).
-        </p>
 
-        <button onclick="loadBenchmark()" id="benchmark-btn">
-          Load Results
+        <div style="display:flex;align-items:flex-start;
+                    justify-content:space-between;margin-bottom:0.5rem;">
+          <div>
+            <h2>Payroll Exception Detector</h2>
+            <p class="description">
+              Claude analyses the payroll dataset and flags anomalies
+              — zero hours, bank account changes, overpayments, duplicates.
+              Every exception requires human approval before processing.
+              Full audit trail logged to Google Sheets.
+            </p>
+          </div>
+          <div style="background:#fff1f2;border:1px solid #fecdd3;
+                      border-left:3px solid #dc2626;border-radius:8px;
+                      padding:0.6rem 0.85rem;min-width:220px;
+                      flex-shrink:0;margin-left:1rem;">
+            <div style="font-size:0.7rem;font-weight:700;color:#dc2626;
+                        text-transform:uppercase;letter-spacing:0.4px;
+                        margin-bottom:2px;">
+              ⚠️ Risk tier: HIGH
+            </div>
+            <div style="font-size:0.72rem;color:#881337;line-height:1.4;">
+              No payment is processed without explicit human approval.
+              All decisions are audit logged.
+            </div>
+          </div>
+        </div>
+
+        <!-- Dataset preview -->
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;
+                    border-radius:8px;padding:0.85rem 1rem;
+                    margin-bottom:1rem;">
+          <div style="font-size:0.75rem;font-weight:700;color:#64748b;
+                      text-transform:uppercase;letter-spacing:0.4px;
+                      margin-bottom:0.5rem;">
+            Dataset — June 2026 Payroll Run · 8 records · 4 countries
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <span style="background:white;border:1px solid #e2e8f0;
+                         border-radius:6px;padding:3px 10px;
+                         font-size:0.75rem;color:#475569;">
+              🇬🇧 3 UK employees
+            </span>
+            <span style="background:white;border:1px solid #e2e8f0;
+                         border-radius:6px;padding:3px 10px;
+                         font-size:0.75rem;color:#475569;">
+              🇩🇪 2 Germany employees
+            </span>
+            <span style="background:white;border:1px solid #e2e8f0;
+                         border-radius:6px;padding:3px 10px;
+                         font-size:0.75rem;color:#475569;">
+              🇪🇸 1 Spain employee
+            </span>
+            <span style="background:white;border:1px solid #e2e8f0;
+                         border-radius:6px;padding:3px 10px;
+                         font-size:0.75rem;color:#475569;">
+              🇧🇷 1 Brazil employee
+            </span>
+            <span style="background:#fff1f2;border:1px solid #fecdd3;
+                         border-radius:6px;padding:3px 10px;
+                         font-size:0.75rem;color:#dc2626;font-weight:600;">
+              ⚠️ Contains intentional anomalies
+            </span>
+          </div>
+        </div>
+
+        <button onclick="runPayrollAnalysis()" id="payroll-btn"
+                style="background:#1a1a1a;color:white;border:none;
+                       border-radius:8px;padding:0.75rem 1.5rem;
+                       font-size:0.875rem;font-weight:600;
+                       cursor:pointer;width:100%;margin-bottom:1rem;">
+          🔍 Run Payroll Exception Analysis
         </button>
 
-        <div id="benchmark-loading" class="loading hidden">
-          Loading results...
+        <div id="payroll-loading" class="loading hidden">
+          Claude is analysing 8 payroll records...
         </div>
 
-        <div id="benchmark-result" class="hidden">
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-number" id="stat-total"></div>
-              <div class="stat-label">Total tests</div>
+        <!-- Results -->
+        <div id="payroll-results" style="display:none;">
+
+          <!-- Summary bar -->
+          <div id="payroll-summary"
+               style="background:#0a1628;color:white;border-radius:10px;
+                      padding:1rem 1.25rem;margin-bottom:1rem;
+                      display:grid;grid-template-columns:repeat(4,1fr);
+                      gap:1rem;">
+            <div style="text-align:center;">
+              <div style="font-size:1.5rem;font-weight:800;"
+                   id="pr-total">—</div>
+              <div style="font-size:0.7rem;color:#94a3b8;
+                          text-transform:uppercase;letter-spacing:0.4px;">
+                Total records
+              </div>
             </div>
-            <div class="stat-card">
-              <div class="stat-number" id="stat-json"></div>
-              <div class="stat-label">JSON compliance</div>
+            <div style="text-align:center;">
+              <div style="font-size:1.5rem;font-weight:800;
+                          color:#f87171;" id="pr-exceptions">—</div>
+              <div style="font-size:0.7rem;color:#94a3b8;
+                          text-transform:uppercase;letter-spacing:0.4px;">
+                Exceptions flagged
+              </div>
             </div>
-            <div class="stat-card">
-              <div class="stat-number" id="stat-area"></div>
-              <div class="stat-label">Policy area accuracy</div>
+            <div style="text-align:center;">
+              <div style="font-size:1.5rem;font-weight:800;
+                          color:#4ade80;" id="pr-clean">—</div>
+              <div style="font-size:0.7rem;color:#94a3b8;
+                          text-transform:uppercase;letter-spacing:0.4px;">
+                Clean records
+              </div>
             </div>
-            <div class="stat-card">
-              <div class="stat-number" id="stat-boundary"></div>
-              <div class="stat-label">Hallucination check</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number" id="stat-latency"></div>
-              <div class="stat-label">Avg latency</div>
+            <div style="text-align:center;">
+              <div style="font-size:1.5rem;font-weight:800;
+                          color:#fbbf24;" id="pr-pending">—</div>
+              <div style="font-size:0.7rem;color:#94a3b8;
+                          text-transform:uppercase;letter-spacing:0.4px;">
+                Awaiting approval
+              </div>
             </div>
           </div>
 
-          <table id="benchmark-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Category</th>
-                <th>Question</th>
-                <th>Latency</th>
-                <th>JSON</th>
-                <th>Accurate</th>
-                <th>Area</th>
-              </tr>
-            </thead>
-            <tbody id="benchmark-tbody"></tbody>
-          </table>
+          <!-- Executive summary -->
+          <div id="payroll-exec-summary"
+               style="background:#fefce8;border:1px solid #fde68a;
+                      border-left:3px solid #d97706;border-radius:8px;
+                      padding:0.85rem 1rem;margin-bottom:1rem;
+                      font-size:0.82rem;color:#92400e;">
+          </div>
+
+          <!-- Exceptions list -->
+          <div style="font-size:0.75rem;font-weight:700;color:#dc2626;
+                      text-transform:uppercase;letter-spacing:0.4px;
+                      margin-bottom:0.75rem;">
+            ⚠️ Exceptions requiring human approval
+          </div>
+          <div id="exceptions-list"></div>
+
+          <!-- Clean records -->
+          <div style="font-size:0.75rem;font-weight:700;color:#16a34a;
+                      text-transform:uppercase;letter-spacing:0.4px;
+                      margin:1rem 0 0.75rem;">
+            ✓ Clean records — approved for processing
+          </div>
+          <div id="clean-list"></div>
+
+          <!-- Audit actions -->
+          <div id="audit-section"
+               style="margin-top:1.5rem;display:none;">
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;
+                        border-left:3px solid #16a34a;border-radius:8px;
+                        padding:0.85rem 1rem;margin-bottom:0.75rem;
+                        font-size:0.82rem;color:#15803d;">
+              <strong>All exceptions reviewed.</strong>
+              Click below to log all decisions to the audit trail
+              in Google Sheets.
+            </div>
+            <button onclick="logAuditTrail()"
+                    id="audit-btn"
+                    style="background:#16a34a;color:white;border:none;
+                           border-radius:8px;padding:0.75rem 1.5rem;
+                           font-size:0.875rem;font-weight:600;
+                           cursor:pointer;width:100%;">
+              📋 Log All Decisions to Audit Trail
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
 
-<!-- TAB: Live Dashboard -->
+<!-- TAB 3: Onboarding Pipeline -->
+    <div id="tab-onboarding" class="tab hidden">
+      <div class="card">
+        <h2>Multi-Agent Onboarding Pipeline</h2>
+        <p class="description">
+          Three specialised AI agents work in sequence — Gemini for
+          intake validation, Claude for compliance checking, Claude
+          for setup and assignment. A human manager approves each
+          stage before the next agent activates.
+        </p>
+
+        <!-- Architecture diagram -->
+        <div style="display:flex;align-items:center;gap:0;
+                    margin-bottom:1.5rem;overflow-x:auto;
+                    padding:0.75rem 0;">
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="width:44px;height:44px;border-radius:50%;
+                        background:#f0fdf4;border:2px solid #16a34a;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:18px;
+                        margin:0 auto 4px;">📋</div>
+            <div style="font-size:10px;color:#64748b;font-weight:600;">
+              New hire
+            </div>
+          </div>
+          <div style="flex:1;height:2px;background:#e2e8f0;
+                      min-width:20px;"></div>
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="width:44px;height:44px;border-radius:50%;
+                        background:#eff6ff;border:2px solid #3b82f6;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:18px;
+                        margin:0 auto 4px;">🔍</div>
+            <div style="font-size:10px;color:#64748b;font-weight:600;">
+              Agent 1
+            </div>
+            <div style="font-size:9px;color:#94a3b8;">Gemini</div>
+          </div>
+          <div style="flex:1;height:2px;background:#e2e8f0;
+                      min-width:20px;"></div>
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="width:44px;height:44px;border-radius:50%;
+                        background:#fefce8;border:2px solid #d97706;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:18px;
+                        margin:0 auto 4px;">👤</div>
+            <div style="font-size:10px;color:#d97706;font-weight:600;">
+              Gate 1
+            </div>
+            <div style="font-size:9px;color:#94a3b8;">HR approval</div>
+          </div>
+          <div style="flex:1;height:2px;background:#e2e8f0;
+                      min-width:20px;"></div>
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="width:44px;height:44px;border-radius:50%;
+                        background:#eff6ff;border:2px solid #3b82f6;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:18px;
+                        margin:0 auto 4px;">📋</div>
+            <div style="font-size:10px;color:#64748b;font-weight:600;">
+              Agent 2
+            </div>
+            <div style="font-size:9px;color:#94a3b8;">Claude</div>
+          </div>
+          <div style="flex:1;height:2px;background:#e2e8f0;
+                      min-width:20px;"></div>
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="width:44px;height:44px;border-radius:50%;
+                        background:#fefce8;border:2px solid #d97706;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:18px;
+                        margin:0 auto 4px;">👤</div>
+            <div style="font-size:10px;color:#d97706;font-weight:600;">
+              Gate 2
+            </div>
+            <div style="font-size:9px;color:#94a3b8;">HR approval</div>
+          </div>
+          <div style="flex:1;height:2px;background:#e2e8f0;
+                      min-width:20px;"></div>
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="width:44px;height:44px;border-radius:50%;
+                        background:#eff6ff;border:2px solid #3b82f6;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:18px;
+                        margin:0 auto 4px;">⚙️</div>
+            <div style="font-size:10px;color:#64748b;font-weight:600;">
+              Agent 3
+            </div>
+            <div style="font-size:9px;color:#94a3b8;">Claude</div>
+          </div>
+          <div style="flex:1;height:2px;background:#e2e8f0;
+                      min-width:20px;"></div>
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="width:44px;height:44px;border-radius:50%;
+                        background:#f0fdf4;border:2px solid #16a34a;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:18px;
+                        margin:0 auto 4px;">✅</div>
+            <div style="font-size:10px;color:#16a34a;font-weight:600;">
+              Complete
+            </div>
+          </div>
+        </div>
+
+        <!-- New hire form -->
+        <div id="onboarding-form">
+          <div style="font-size:0.78rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:0.6px;
+                      color:#94a3b8;margin-bottom:0.75rem;">
+            New hire details
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;
+                      gap:0.75rem;margin-bottom:0.75rem;">
+            <div>
+              <label style="font-size:0.78rem;color:#64748b;
+                            display:block;margin-bottom:4px;">
+                Full name *
+              </label>
+              <input id="nh-name" type="text"
+                     placeholder="e.g. Maria Santos"
+                     style="width:100%;padding:0.6rem 0.85rem;
+                            border:1.5px solid #e2e8f0;border-radius:8px;
+                            font-size:0.875rem;font-family:inherit;">
+            </div>
+            <div>
+              <label style="font-size:0.78rem;color:#64748b;
+                            display:block;margin-bottom:4px;">
+                Email *
+              </label>
+              <input id="nh-email" type="email"
+                     placeholder="e.g. m.santos@konecta.com"
+                     style="width:100%;padding:0.6rem 0.85rem;
+                            border:1.5px solid #e2e8f0;border-radius:8px;
+                            font-size:0.875rem;font-family:inherit;">
+            </div>
+            <div>
+              <label style="font-size:0.78rem;color:#64748b;
+                            display:block;margin-bottom:4px;">
+                Role *
+              </label>
+              <input id="nh-role" type="text"
+                     placeholder="e.g. HR Technology Specialist"
+                     style="width:100%;padding:0.6rem 0.85rem;
+                            border:1.5px solid #e2e8f0;border-radius:8px;
+                            font-size:0.875rem;font-family:inherit;">
+            </div>
+            <div>
+              <label style="font-size:0.78rem;color:#64748b;
+                            display:block;margin-bottom:4px;">
+                Department *
+              </label>
+              <input id="nh-dept" type="text"
+                     placeholder="e.g. HR Services"
+                     style="width:100%;padding:0.6rem 0.85rem;
+                            border:1.5px solid #e2e8f0;border-radius:8px;
+                            font-size:0.875rem;font-family:inherit;">
+            </div>
+            <div>
+              <label style="font-size:0.78rem;color:#64748b;
+                            display:block;margin-bottom:4px;">
+                Start date *
+              </label>
+              <input id="nh-start" type="date"
+                     style="width:100%;padding:0.6rem 0.85rem;
+                            border:1.5px solid #e2e8f0;border-radius:8px;
+                            font-size:0.875rem;font-family:inherit;">
+            </div>
+            <div>
+              <label style="font-size:0.78rem;color:#64748b;
+                            display:block;margin-bottom:4px;">
+                Country *
+              </label>
+              <select id="nh-country"
+                      style="width:100%;padding:0.6rem 0.85rem;
+                             border:1.5px solid #e2e8f0;border-radius:8px;
+                             font-size:0.875rem;font-family:inherit;
+                             background:white;">
+                <option value="UK">🇬🇧 United Kingdom</option>
+                <option value="Spain">🇪🇸 Spain</option>
+                <option value="Germany">🇩🇪 Germany</option>
+                <option value="Brazil">🇧🇷 Brazil</option>
+              </select>
+            </div>
+            <div style="grid-column:span 2;">
+              <label style="font-size:0.78rem;color:#64748b;
+                            display:block;margin-bottom:4px;">
+                Line manager *
+              </label>
+              <input id="nh-manager" type="text"
+                     placeholder="e.g. Sarah Johnson"
+                     style="width:100%;padding:0.6rem 0.85rem;
+                            border:1.5px solid #e2e8f0;border-radius:8px;
+                            font-size:0.875rem;font-family:inherit;">
+            </div>
+          </div>
+
+          <!-- Quick fill buttons -->
+          <div style="margin-bottom:1rem;">
+            <div style="font-size:0.72rem;color:#94a3b8;margin-bottom:6px;">
+              Quick fill with sample data:
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <button onclick="fillSample('UK')"
+                      style="background:#f1f5f9;border:1px solid #e2e8f0;
+                             border-radius:20px;padding:0.3rem 0.85rem;
+                             font-size:0.78rem;color:#475569;cursor:pointer;">
+                🇬🇧 UK hire
+              </button>
+              <button onclick="fillSample('Spain')"
+                      style="background:#f1f5f9;border:1px solid #e2e8f0;
+                             border-radius:20px;padding:0.3rem 0.85rem;
+                             font-size:0.78rem;color:#475569;cursor:pointer;">
+                🇪🇸 Spain hire
+              </button>
+              <button onclick="fillSample('Germany')"
+                      style="background:#f1f5f9;border:1px solid #e2e8f0;
+                             border-radius:20px;padding:0.3rem 0.85rem;
+                             font-size:0.78rem;color:#475569;cursor:pointer;">
+                🇩🇪 Germany hire
+              </button>
+              <button onclick="fillSample('Brazil')"
+                      style="background:#f1f5f9;border:1px solid #e2e8f0;
+                             border-radius:20px;padding:0.3rem 0.85rem;
+                             font-size:0.78rem;color:#475569;cursor:pointer;">
+                🇧🇷 Brazil hire
+              </button>
+            </div>
+          </div>
+
+          <button onclick="startOnboarding()"
+                  id="start-btn"
+                  style="background:#1a1a1a;color:white;border:none;
+                         border-radius:8px;padding:0.75rem 1.5rem;
+                         font-size:0.875rem;font-weight:600;
+                         cursor:pointer;width:100%;">
+            🚀 Start Onboarding Pipeline
+          </button>
+        </div>
+
+        <!-- Pipeline progress -->
+        <div id="onboarding-pipeline" style="display:none;
+             margin-top:1.5rem;">
+
+          <!-- Agent 1 -->
+          <div id="stage-intake" class="pipeline-stage">
+            <div style="display:flex;align-items:center;gap:0.75rem;
+                        margin-bottom:0.75rem;">
+              <div style="width:36px;height:36px;border-radius:50%;
+                          background:#eff6ff;border:2px solid #3b82f6;
+                          display:flex;align-items:center;
+                          justify-content:center;font-size:16px;">
+                🔍
+              </div>
+              <div>
+                <div style="font-weight:600;font-size:0.9rem;">
+                  Agent 1 — Intake &amp; Validation
+                </div>
+                <div style="font-size:0.75rem;color:#64748b;">
+                  Powered by Gemini 2.0 Flash
+                </div>
+              </div>
+              <div id="intake-status"
+                   style="margin-left:auto;font-size:0.78rem;
+                          color:#94a3b8;">
+                Waiting...
+              </div>
+            </div>
+            <div id="intake-result"
+                 style="display:none;background:#f8fafc;
+                        border:1px solid #e2e8f0;border-radius:8px;
+                        padding:1rem;font-size:0.82rem;">
+            </div>
+            <div id="intake-gate"
+                 style="display:none;margin-top:0.75rem;">
+              <div style="background:#fefce8;border:1px solid #fde68a;
+                          border-left:3px solid #d97706;border-radius:8px;
+                          padding:0.85rem 1rem;margin-bottom:0.75rem;
+                          font-size:0.82rem;color:#92400e;">
+                <strong>⚠️ Human Approval Gate 1</strong> — Review the
+                intake validation above. Approve to proceed to compliance
+                checking, or reject to send back for correction.
+              </div>
+              <div style="display:flex;gap:0.75rem;">
+                <button onclick="approveGate('intake')"
+                        style="flex:1;background:#16a34a;color:white;
+                               border:none;border-radius:8px;
+                               padding:0.65rem;font-size:0.875rem;
+                               font-weight:600;cursor:pointer;">
+                  ✓ Approve — Proceed to Compliance Check
+                </button>
+                <button onclick="rejectGate('intake')"
+                        style="flex:1;background:#dc2626;color:white;
+                               border:none;border-radius:8px;
+                               padding:0.65rem;font-size:0.875rem;
+                               font-weight:600;cursor:pointer;">
+                  ✗ Reject — Return for Correction
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div style="border-left:2px dashed #e2e8f0;margin:0 18px;
+                      height:24px;"></div>
+
+          <!-- Agent 2 -->
+          <div id="stage-compliance" class="pipeline-stage"
+               style="opacity:0.4;">
+            <div style="display:flex;align-items:center;gap:0.75rem;
+                        margin-bottom:0.75rem;">
+              <div style="width:36px;height:36px;border-radius:50%;
+                          background:#eff6ff;border:2px solid #3b82f6;
+                          display:flex;align-items:center;
+                          justify-content:center;font-size:16px;">
+                📋
+              </div>
+              <div>
+                <div style="font-weight:600;font-size:0.9rem;">
+                  Agent 2 — Compliance Check
+                </div>
+                <div style="font-size:0.75rem;color:#64748b;">
+                  Powered by Claude · Country-specific requirements
+                </div>
+              </div>
+              <div id="compliance-status"
+                   style="margin-left:auto;font-size:0.78rem;
+                          color:#94a3b8;">
+                Locked
+              </div>
+            </div>
+            <div id="compliance-result"
+                 style="display:none;background:#f8fafc;
+                        border:1px solid #e2e8f0;border-radius:8px;
+                        padding:1rem;font-size:0.82rem;">
+            </div>
+            <div id="compliance-gate" style="display:none;
+                 margin-top:0.75rem;">
+              <div style="background:#fefce8;border:1px solid #fde68a;
+                          border-left:3px solid #d97706;border-radius:8px;
+                          padding:0.85rem 1rem;margin-bottom:0.75rem;
+                          font-size:0.82rem;color:#92400e;">
+                <strong>⚠️ Human Approval Gate 2</strong> — Review the
+                compliance checklist above. Approve to trigger final
+                setup, or reject if compliance issues need resolving first.
+              </div>
+              <div style="display:flex;gap:0.75rem;">
+                <button onclick="approveGate('compliance')"
+                        style="flex:1;background:#16a34a;color:white;
+                               border:none;border-radius:8px;
+                               padding:0.65rem;font-size:0.875rem;
+                               font-weight:600;cursor:pointer;">
+                  ✓ Approve — Trigger Setup &amp; Assignment
+                </button>
+                <button onclick="rejectGate('compliance')"
+                        style="flex:1;background:#dc2626;color:white;
+                               border:none;border-radius:8px;
+                               padding:0.65rem;font-size:0.875rem;
+                               font-weight:600;cursor:pointer;">
+                  ✗ Reject — Resolve Compliance Issues First
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div style="border-left:2px dashed #e2e8f0;margin:0 18px;
+                      height:24px;"></div>
+
+          <!-- Agent 3 -->
+          <div id="stage-setup" class="pipeline-stage"
+               style="opacity:0.4;">
+            <div style="display:flex;align-items:center;gap:0.75rem;
+                        margin-bottom:0.75rem;">
+              <div style="width:36px;height:36px;border-radius:50%;
+                          background:#eff6ff;border:2px solid #3b82f6;
+                          display:flex;align-items:center;
+                          justify-content:center;font-size:16px;">
+                ⚙️
+              </div>
+              <div>
+                <div style="font-weight:600;font-size:0.9rem;">
+                  Agent 3 — Setup &amp; Assignment
+                </div>
+                <div style="font-size:0.75rem;color:#64748b;">
+                  Powered by Claude · IT access · Training · Check-ins
+                </div>
+              </div>
+              <div id="setup-status"
+                   style="margin-left:auto;font-size:0.78rem;
+                          color:#94a3b8;">
+                Locked
+              </div>
+            </div>
+            <div id="setup-result"
+                 style="display:none;background:#f8fafc;
+                        border:1px solid #e2e8f0;border-radius:8px;
+                        padding:1rem;font-size:0.82rem;">
+            </div>
+          </div>
+
+          <!-- Complete -->
+          <div id="stage-complete" style="display:none;
+               margin-top:1rem;">
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;
+                        border-radius:10px;padding:1.25rem;
+                        text-align:center;">
+              <div style="font-size:2rem;margin-bottom:0.5rem;">✅</div>
+              <div style="font-weight:700;color:#15803d;
+                          margin-bottom:0.25rem;">
+                Onboarding Pipeline Complete
+              </div>
+              <div style="font-size:0.82rem;color:#16a34a;"
+                   id="complete-msg">
+              </div>
+              <button onclick="resetOnboarding()"
+                      style="margin-top:1rem;background:white;
+                             border:1px solid #e2e8f0;border-radius:8px;
+                             padding:0.5rem 1.25rem;font-size:0.82rem;
+                             cursor:pointer;color:#475569;">
+                Start new onboarding
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Live Dashboard -->
     <div id="tab-dashboard" class="tab hidden">
       <div class="card">
         <h2>Live HR Operations Dashboard</h2>
         <p class="description">
           Real-time metrics pulled from Google Sheets.
-          Every ticket classified by Claude is logged and
-          reflected here instantly — including SLA deadlines
-          and overdue alerts.
+          Every ticket classified by Claude is logged and reflected here
+          instantly — including SLA deadlines and overdue alerts.
         </p>
-
         <button onclick="loadDashboard()" id="dashboard-btn">
           Load Live Data
         </button>
-
         <div id="dashboard-loading" class="loading hidden">
           Fetching live data from Google Sheets...
         </div>
-
         <div id="dashboard-content" class="hidden">
 
           <!-- Summary Cards -->
@@ -291,15 +1018,170 @@
             </div>
           </div>
 
-          <!-- SLA Chart -->
+          <!-- SLA & Management View -->
           <div style="background:#f9f9f9;border:1px solid #e5e5e5;
                       border-radius:8px;padding:1.25rem;
                       margin-top:1.5rem;">
             <h3 style="font-size:0.9rem;font-weight:600;
-                       margin-bottom:1rem;color:#444;">
-              SLA distribution
+                       margin-bottom:0.5rem;color:#444;">
+              SLA & ticket management view
             </h3>
-            <canvas id="sla-chart" height="100"></canvas>
+            <p style="font-size:0.8rem;color:#888;margin-bottom:1.25rem;">
+              Every ticket is automatically assigned a deadline based on
+              department and priority. SLA = maximum response time.
+              Counts show live ticket volume from Google Sheets.
+            </p>
+
+            <!-- Department x Priority Matrix -->
+            <div style="overflow-x:auto;margin-bottom:1.5rem;">
+              <table style="width:100%;border-collapse:collapse;
+                            font-size:0.82rem;">
+                <thead>
+                 
+            <tr style="background:#1E293B;color:white;">
+                    <th style="padding:0.6rem 0.75rem;text-align:left;
+                               font-weight:500;background:#d3d0d0;">
+                      Department
+                    </th>
+                    <th style="padding:0.6rem 0.75rem;text-align:center;
+                               font-weight:500;background:#d3d0d0;">
+                      🔴 High priority
+                    </th>
+                    <th style="padding:0.6rem 0.75rem;text-align:center;
+                               font-weight:500;background:#d3d0d0;">
+                      🟡 Medium priority
+                    </th>
+                    <th style="padding:0.6rem 0.75rem;text-align:center;
+                               font-weight:500;background:#d3d0d0;">
+                      🟢 Low priority
+                    </th>
+                    <th style="padding:0.6rem 0.75rem;text-align:center;
+                               font-weight:500;background:#d3d0d0;">
+                      Total
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="sla-matrix-body">
+                  <tr>
+                    <td colspan="5"
+                        style="padding:1rem;text-align:center;
+                               color:#999;font-size:0.8rem;">
+                      Load live data to see ticket counts
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- SLA Legend Cards -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);
+                        gap:0.5rem;margin-bottom:1.25rem;">
+              <div style="background:white;border:1px solid #fecdd3;
+                          border-radius:6px;padding:0.6rem 0.75rem;">
+                <div style="font-size:11px;font-weight:600;color:#dc2626;
+                            margin-bottom:2px;">🔴 2h SLA</div>
+                <div style="font-size:11px;color:#666;">
+                  Payroll · High priority
+                </div>
+              </div>
+              <div style="background:white;border:1px solid #fde68a;
+                          border-radius:6px;padding:0.6rem 0.75rem;">
+                <div style="font-size:11px;font-weight:600;color:#d97706;
+                            margin-bottom:2px;">🟡 4–8h SLA</div>
+                <div style="font-size:11px;color:#666;">
+                  HR Ops / Talent · High
+                </div>
+              </div>
+              <div style="background:white;border:1px solid #bfdbfe;
+                          border-radius:6px;padding:0.6rem 0.75rem;">
+                <div style="font-size:11px;font-weight:600;color:#2563eb;
+                            margin-bottom:2px;">🔵 24–48h SLA</div>
+                <div style="font-size:11px;color:#666;">
+                  Medium priority · All depts
+                </div>
+              </div>
+              <div style="background:white;border:1px solid #bbf7d0;
+                          border-radius:6px;padding:0.6rem 0.75rem;">
+                <div style="font-size:11px;font-weight:600;color:#16a34a;
+                            margin-bottom:2px;">🟢 72–120h SLA</div>
+                <div style="font-size:11px;color:#666;">
+                  Low priority · All depts
+                </div>
+              </div>
+            </div>
+
+            <!-- SLA Reference Table -->
+            <table style="width:100%;border-collapse:collapse;
+                          font-size:0.8rem;margin-bottom:1.25rem;">
+              <thead>
+                <tr style="background:#f0f0f0;">
+                  <th style="padding:0.4rem 0.75rem;text-align:left;
+                             font-weight:600;color:#555;
+                             border-bottom:1px solid #e5e5e5;">
+                    Department
+                  </th>
+                  <th style="padding:0.4rem 0.75rem;text-align:center;
+                             font-weight:600;color:#dc2626;
+                             border-bottom:1px solid #e5e5e5;">
+                    High
+                  </th>
+                  <th style="padding:0.4rem 0.75rem;text-align:center;
+                             font-weight:600;color:#d97706;
+                             border-bottom:1px solid #e5e5e5;">
+                    Medium
+                  </th>
+                  <th style="padding:0.4rem 0.75rem;text-align:center;
+                             font-weight:600;color:#16a34a;
+                             border-bottom:1px solid #e5e5e5;">
+                    Low
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid #f0f0f0;">
+                  <td style="padding:0.4rem 0.75rem;color:#444;
+                             font-weight:500;">Payroll</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#dc2626;font-weight:600;">2h</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#d97706;">24h</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#16a34a;">48h</td>
+                </tr>
+                <tr style="border-bottom:1px solid #f0f0f0;">
+                  <td style="padding:0.4rem 0.75rem;color:#444;
+                             font-weight:500;">HR Ops</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#dc2626;font-weight:600;">4h</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#d97706;">48h</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#16a34a;">72h</td>
+                </tr>
+                <tr style="border-bottom:1px solid #f0f0f0;">
+                  <td style="padding:0.4rem 0.75rem;color:#444;
+                             font-weight:500;">Talent</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#dc2626;font-weight:600;">8h</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#d97706;">48h</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#16a34a;">96h</td>
+                </tr>
+                <tr>
+                  <td style="padding:0.4rem 0.75rem;color:#444;
+                             font-weight:500;">
+                    Learning & Development
+                  </td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#dc2626;font-weight:600;">24h</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#d97706;">72h</td>
+                  <td style="padding:0.4rem 0.75rem;text-align:center;
+                             color:#16a34a;">120h</td>
+                </tr>
+          </tbody>
+            </table>
           </div>
 
           <!-- Overdue Tickets -->
@@ -324,10 +1206,230 @@
       </div>
     </div>
 
+   <!-- TAB 5: Benchmark -->
+    <div id="tab-benchmark" class="tab hidden">
+      <div class="card">
+        <h2>Benchmark Evaluation Results</h2>
+        <p class="description">
+          Claude evaluated across 8 test cases in three categories:
+          straightforward retrieval, boundary cases designed to catch
+          hallucination, and ambiguous cases testing confidence
+          behaviour when policy does not have a clear answer.
+        </p>
+        <button onclick="loadBenchmark()" id="benchmark-btn">
+          Load Results
+        </button>
+        <div id="benchmark-loading" class="loading hidden">
+          Loading results...
+        </div>
+        <div id="benchmark-result" class="hidden">
+          <div style="margin-top:1.25rem;margin-bottom:1.5rem;">
+            <p style="font-size:0.82rem;color:#64748b;line-height:1.7;
+                      margin-bottom:1.25rem;background:#f8fafc;
+                      border-radius:8px;padding:0.85rem 1rem;
+                      border-left:3px solid #e2e8f0;">
+              All metrics are based on real API calls made to Claude during the benchmark.
+            </p>
+
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);
+                        gap:0.75rem;">
+
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;
+                          border-radius:10px;padding:1rem;text-align:center;">
+                <div style="font-size:1.6rem;font-weight:800;color:#0a1628;
+                            letter-spacing:-1px;"
+                     id="stat-total">—</div>
+                <div style="font-size:0.7rem;font-weight:700;color:#94a3b8;
+                            text-transform:uppercase;letter-spacing:0.4px;
+                            margin:4px 0 6px;">
+                  Total tests
+                </div>
+                <div style="font-size:0.71rem;color:#64748b;line-height:1.5;">
+                  Questions tested across 3 categories covering the full
+                  range of HR policy scenarios
+                </div>
+              </div>
+
+              <div style="background:#f0fdf4;border:1px solid #bbf7d0;
+                          border-radius:10px;padding:1rem;text-align:center;">
+                <div style="font-size:1.6rem;font-weight:800;color:#15803d;
+                            letter-spacing:-1px;"
+                     id="stat-json">—</div>
+                <div style="font-size:0.7rem;font-weight:700;color:#16a34a;
+                            text-transform:uppercase;letter-spacing:0.4px;
+                            margin:4px 0 6px;">
+                  JSON compliance
+                </div>
+                <div style="font-size:0.71rem;color:#64748b;line-height:1.5;">
+                  Responses validated against a strict output schema.
+                  100% means the pipeline never broke a downstream system
+                </div>
+              </div>
+
+              <div style="background:#eff6ff;border:1px solid #bfdbfe;
+                          border-radius:10px;padding:1rem;text-align:center;">
+                <div style="font-size:1.6rem;font-weight:800;color:#1d4ed8;
+                            letter-spacing:-1px;"
+                     id="stat-area">—</div>
+                <div style="font-size:0.7rem;font-weight:700;color:#2563eb;
+                            text-transform:uppercase;letter-spacing:0.4px;
+                            margin:4px 0 6px;">
+                  Policy area accuracy
+                </div>
+                <div style="font-size:0.71rem;color:#64748b;line-height:1.5;">
+                  Model correctly identified which policy section applied
+                  to each employee question
+                </div>
+              </div>
+
+              <div style="background:#fefce8;border:1px solid #fde68a;
+                          border-radius:10px;padding:1rem;text-align:center;">
+                <div style="font-size:1.6rem;font-weight:800;color:#92400e;
+                            letter-spacing:-1px;"
+                     id="stat-boundary">—</div>
+                <div style="font-size:0.7rem;font-weight:700;color:#d97706;
+                            text-transform:uppercase;letter-spacing:0.4px;
+                            margin:4px 0 6px;">
+                  Hallucination check
+                </div>
+                <div style="font-size:0.71rem;color:#64748b;line-height:1.5;">
+                  Boundary tests where the correct answer is "no" or a
+                  limit applies. Failure means the model invented a policy
+                </div>
+              </div>
+
+              <div style="background:#faf5ff;border:1px solid #e9d5ff;
+                          border-radius:10px;padding:1rem;text-align:center;">
+                <div style="font-size:1.6rem;font-weight:800;color:#6b21a8;
+                            letter-spacing:-1px;"
+                     id="stat-latency">—</div>
+                <div style="font-size:0.7rem;font-weight:700;color:#7c3aed;
+                            text-transform:uppercase;letter-spacing:0.4px;
+                            margin:4px 0 6px;">
+                  Avg latency
+                </div>
+                <div style="font-size:0.71rem;color:#64748b;line-height:1.5;">
+                  Average response time per query. Optimisable at scale
+                  via caching and async processing
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Key finding -->
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;
+                        border-left:3px solid #16a34a;border-radius:8px;
+                        padding:0.85rem 1rem;margin-top:1rem;
+                        font-size:0.82rem;color:#15803d;line-height:1.6;">
+              <strong>Key finding:</strong> Zero hallucination on all
+              boundary test cases. When asked questions where the correct
+              answer was "no" — e.g. "Can I carry over 10 days of leave?"
+              — Claude correctly identified the policy limit and answered
+              with high confidence rather than inventing a permissive
+              policy. This is the most critical safety check before
+              enterprise HR deployment.
+            </div>
+
+            <!-- Category breakdown -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                        gap:0.75rem;margin-top:0.75rem;">
+              <div style="background:#dbeafe;border-radius:8px;
+                          padding:0.75rem 1rem;">
+                <div style="font-size:0.75rem;font-weight:700;
+                            color:#1e40af;margin-bottom:4px;">
+                  Straightforward — 3 tests
+                </div>
+                <div style="font-size:0.71rem;color:#1e40af;line-height:1.5;">
+                  Basic policy retrieval — leave entitlement, remote
+                  work days, L&D budget. Validates that the model
+                  extracts clear facts reliably.
+                </div>
+              </div>
+              <div style="background:#fef3c7;border-radius:8px;
+                          padding:0.75rem 1rem;">
+                <div style="font-size:0.75rem;font-weight:700;
+                            color:#92400e;margin-bottom:4px;">
+                  Boundary — 3 tests
+                </div>
+                <div style="font-size:0.71rem;color:#92400e;line-height:1.5;">
+                  Hallucination detection — questions where a limit
+                  or constraint applies. Designed to catch models
+                  that invent permissive policies.
+                </div>
+              </div>
+              <div style="background:#f3e8ff;border-radius:8px;
+                          padding:0.75rem 1rem;">
+                <div style="font-size:0.75rem;font-weight:700;
+                            color:#6b21a8;margin-bottom:4px;">
+                  Ambiguous — 2 tests
+                </div>
+                <div style="font-size:0.71rem;color:#6b21a8;line-height:1.5;">
+                  Edge cases where policy has no clear answer. Tests
+                  whether the model signals uncertainty rather than
+                  fabricating a response.
+                </div>
+              </div>
+            </div>
+          </div>
+          <table id="benchmark-table" style="width:100%;
+                 border-collapse:collapse;font-size:0.82rem;
+                 margin-top:1rem;">
+            <thead>
+              <tr style="background:#f9f9f9;">
+                <th style="padding:0.55rem 0.75rem;text-align:left;
+                           font-weight:700;font-size:0.7rem;
+                           text-transform:uppercase;letter-spacing:0.5px;
+                           color:#64748b;border-bottom:2px solid #e2e8f0;">
+                  ID
+                </th>
+                <th style="padding:0.55rem 0.75rem;text-align:left;
+                           font-weight:700;font-size:0.7rem;
+                           text-transform:uppercase;letter-spacing:0.5px;
+                           color:#64748b;border-bottom:2px solid #e2e8f0;">
+                  Category
+                </th>
+                <th style="padding:0.55rem 0.75rem;text-align:left;
+                           font-weight:700;font-size:0.7rem;
+                           text-transform:uppercase;letter-spacing:0.5px;
+                           color:#64748b;border-bottom:2px solid #e2e8f0;">
+                  Question
+                </th>
+                <th style="padding:0.55rem 0.75rem;text-align:left;
+                           font-weight:700;font-size:0.7rem;
+                           text-transform:uppercase;letter-spacing:0.5px;
+                           color:#64748b;border-bottom:2px solid #e2e8f0;">
+                  Latency
+                </th>
+                <th style="padding:0.55rem 0.75rem;text-align:left;
+                           font-weight:700;font-size:0.7rem;
+                           text-transform:uppercase;letter-spacing:0.5px;
+                           color:#64748b;border-bottom:2px solid #e2e8f0;">
+                  JSON
+                </th>
+                <th style="padding:0.55rem 0.75rem;text-align:left;
+                           font-weight:700;font-size:0.7rem;
+                           text-transform:uppercase;letter-spacing:0.5px;
+                           color:#64748b;border-bottom:2px solid #e2e8f0;">
+                  Accurate
+                </th>
+                <th style="padding:0.55rem 0.75rem;text-align:left;
+                           font-weight:700;font-size:0.7rem;
+                           text-transform:uppercase;letter-spacing:0.5px;
+                           color:#64748b;border-bottom:2px solid #e2e8f0;">
+                  Area
+                </th>
+              </tr>
+            </thead>
+            <tbody id="benchmark-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <footer>
-    <p>HR AI Automation Lab ·
+    <p>Konecta — HR AI Automation Lab ·
       <a href="https://github.com/humbertodemorais-design/hr-ai-lab"
          target="_blank">
         github.com/humbertodemorais-design/hr-ai-lab
@@ -336,34 +1438,154 @@
   </footer>
 
   <script>
-    function showTab(name) {
+    // ── Tab navigation ──
+  function showTab(name, btn) {
       document.querySelectorAll('.tab').forEach(t => {
-        t.classList.add('hidden');
         t.classList.remove('active');
+        t.classList.add('hidden');
       });
       document.querySelectorAll('.tab-btn').forEach(b => {
         b.classList.remove('active');
       });
-      document.getElementById('tab-' + name)
-        .classList.remove('hidden');
-      event.target.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+      document.getElementById('tab-' + name).classList.remove('hidden');
+      if (btn) btn.classList.add('active');
+    }
+
+    // ── Policy Q&A ──
+    // ── Chat helpers ──
+    function userBubble(text) {
+      const now = new Date().toLocaleTimeString([], {
+        hour:'2-digit', minute:'2-digit'
+      });
+      return `
+        <div style="display:flex;justify-content:flex-end;
+                    align-items:flex-end;gap:0.5rem;">
+          <div style="font-size:10px;color:#aaa;margin-bottom:2px;">
+            ${now}
+          </div>
+          <div style="background:#1a1a1a;color:white;
+                      border-radius:18px 4px 18px 18px;
+                      padding:0.75rem 1.1rem;max-width:75%;
+                      font-size:0.875rem;line-height:1.5;">
+            ${text}
+          </div>
+        </div>`;
+    }
+
+    function thinkingBubble(color) {
+      const c = color || '#1a1a1a';
+      return `
+        <div id="thinking-bubble"
+             style="display:flex;align-items:flex-start;gap:0.75rem;">
+          <div style="width:32px;height:32px;border-radius:50%;
+                      background:${c};display:flex;align-items:center;
+                      justify-content:center;font-size:14px;flex-shrink:0;">
+            ${c === '#1d4ed8' ? '🎫' : '🤖'}
+          </div>
+          <div style="background:white;border:1px solid #e5e5e5;
+                      border-radius:4px 18px 18px 18px;
+                      padding:0.75rem 1rem;
+                      box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+            <div style="display:flex;gap:5px;align-items:center;
+                        height:18px;">
+              <span style="width:7px;height:7px;border-radius:50%;
+                           background:#ccc;display:inline-block;
+                           animation:bounce 1.2s infinite 0s;"></span>
+              <span style="width:7px;height:7px;border-radius:50%;
+                           background:#ccc;display:inline-block;
+                           animation:bounce 1.2s infinite 0.2s;"></span>
+              <span style="width:7px;height:7px;border-radius:50%;
+                           background:#ccc;display:inline-block;
+                           animation:bounce 1.2s infinite 0.4s;"></span>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function aiBubble(id, color, emoji) {
+      const c = color || '#1a1a1a';
+      const e = emoji || '🤖';
+      const now = new Date().toLocaleTimeString([], {
+        hour:'2-digit', minute:'2-digit'
+      });
+      return `
+        <div style="display:flex;justify-content:flex-start;
+                    align-items:flex-start;gap:0.75rem;">
+          <div style="width:32px;height:32px;border-radius:50%;
+                      background:${c};display:flex;align-items:center;
+                      justify-content:center;font-size:14px;
+                      flex-shrink:0;">${e}</div>
+          <div style="max-width:85%;">
+            <div id="${id}"
+                 style="background:white;border:1px solid #e5e5e5;
+                        border-radius:4px 18px 18px 18px;
+                        padding:0.85rem 1.1rem;
+                        font-size:0.875rem;line-height:1.6;color:#1a1a1a;
+                        box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+            </div>
+            <div style="font-size:10px;color:#aaa;margin-top:4px;
+                        padding-left:4px;">
+              ${c === '#1d4ed8' ? 'HR Service Desk' : 'HR Policy Assistant'}
+              · ${now}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function typeText(elementId, text, speed=18) {
+      return new Promise(resolve => {
+        const el = document.getElementById(elementId);
+        let i = 0;
+        el.textContent = '';
+        const timer = setInterval(() => {
+          el.textContent += text[i];
+          i++;
+          if (i >= text.length) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, speed);
+      });
+    }
+
+    function scrollChat(chatId) {
+      const chat = document.getElementById(chatId);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    // ── Policy Q&A ──
+    function fillAndSendPolicy(text) {
+      document.getElementById('policy-input').value = text;
+      askPolicy();
     }
 
     function fillPolicy(text) {
       document.getElementById('policy-input').value = text;
     }
 
-    function fillClassifier(text) {
-      document.getElementById('classifier-input').value = text;
-    }
-
     async function askPolicy() {
-      const question = document.getElementById('policy-input').value.trim();
+      const question = document.getElementById('policy-input')
+        .value.trim();
       if (!question) return;
 
-      document.getElementById('policy-result').classList.add('hidden');
-      document.getElementById('policy-loading').classList.remove('hidden');
-      document.getElementById('policy-btn').disabled = true;
+      const chat = document.getElementById('policy-chat');
+      const btn = document.getElementById('policy-btn');
+
+      // Clear placeholder if first message
+      if (chat.querySelector('[style*="padding:2rem"]')) {
+        chat.innerHTML = '';
+      }
+
+      // Add user bubble
+      chat.innerHTML += userBubble(question);
+      document.getElementById('policy-input').value = '';
+      btn.disabled = true;
+      scrollChat('policy-chat');
+
+      // Add thinking bubble
+      chat.innerHTML += thinkingBubble('#1a1a1a');
+      scrollChat('policy-chat');
 
       try {
         const res = await fetch('/api/policy', {
@@ -373,33 +1595,88 @@
         });
         const data = await res.json();
 
-        document.getElementById('policy-answer').textContent = data.answer;
-        document.getElementById('policy-followup').textContent =
-          data.follow_up_suggestion;
+        // Remove thinking bubble
+        const thinking = document.getElementById('thinking-bubble');
+        if (thinking) thinking.remove();
 
-        const conf = document.getElementById('policy-confidence');
-        conf.textContent = data.confidence.toUpperCase();
-        conf.className = 'badge badge-' + data.confidence;
+        // Confidence color
+        const confColor = data.confidence === 'high'
+          ? '#16a34a' : data.confidence === 'medium'
+          ? '#d97706' : '#dc2626';
 
-        document.getElementById('policy-area').textContent =
-          data.policy_area;
+        // Add meta line + AI bubble
+        const bubbleId = 'policy-reply-' + Date.now();
+        chat.innerHTML += `
+          <div style="display:flex;justify-content:flex-start;
+                      padding-left:36px;gap:0.5rem;flex-wrap:wrap;">
+            <span style="font-size:11px;font-weight:600;
+                         color:${confColor};background:${confColor}18;
+                         padding:2px 8px;border-radius:12px;">
+              ${data.confidence.toUpperCase()} CONFIDENCE
+            </span>
+            <span style="font-size:11px;color:#888;
+                         background:#f0f0f0;padding:2px 8px;
+                         border-radius:12px;">
+              ${data.policy_area}
+            </span>
+          </div>`;
+        chat.innerHTML += aiBubble(bubbleId, '#1a1a1a', '🤖');
+        scrollChat('policy-chat');
 
-        document.getElementById('policy-result').classList.remove('hidden');
+        // Type the answer
+        await typeText(bubbleId, data.answer);
+
+        // Add follow-up suggestion
+        document.getElementById(bubbleId).innerHTML +=
+          `<div style="margin-top:0.75rem;padding-top:0.75rem;
+                       border-top:1px solid #f0f0f0;font-size:0.78rem;
+                       color:#888;">
+            <strong style="color:#555;">Next step:</strong>
+            ${data.follow_up_suggestion}
+          </div>`;
+        scrollChat('policy-chat');
+
       } catch (e) {
-        alert('Error: ' + e.message);
+        const thinking = document.getElementById('thinking-bubble');
+        if (thinking) thinking.remove();
+        chat.innerHTML += aiBubble('err-' + Date.now());
+        document.getElementById(
+          chat.lastElementChild.querySelector('[id]').id
+        ).textContent = 'Something went wrong. Please try again.';
       } finally {
-        document.getElementById('policy-loading').classList.add('hidden');
-        document.getElementById('policy-btn').disabled = false;
+        btn.disabled = false;
       }
     }
 
+    // ── Ticket Classifier ──
+    function fillAndSendClassifier(text) {
+      document.getElementById('classifier-input').value = text;
+      classifyTicket();
+    }
+
+    function fillClassifier(text) {
+      document.getElementById('classifier-input').value = text;
+    }
+
     async function classifyTicket() {
-      const ticket = document.getElementById('classifier-input').value.trim();
+      const ticket = document.getElementById('classifier-input')
+        .value.trim();
       if (!ticket) return;
 
-      document.getElementById('classifier-result').classList.add('hidden');
-      document.getElementById('classifier-loading').classList.remove('hidden');
-      document.getElementById('classifier-btn').disabled = true;
+      const chat = document.getElementById('classifier-chat');
+      const btn = document.getElementById('classifier-btn');
+
+      if (chat.querySelector('[style*="padding:2rem"]')) {
+        chat.innerHTML = '';
+      }
+
+      chat.innerHTML += userBubble(ticket);
+      document.getElementById('classifier-input').value = '';
+      btn.disabled = true;
+      scrollChat('classifier-chat');
+
+      chat.innerHTML += thinkingBubble('#1d4ed8');
+      scrollChat('classifier-chat');
 
       try {
         const res = await fetch('/api/classify', {
@@ -409,49 +1686,73 @@
         });
         const data = await res.json();
 
-        document.getElementById('cls-department').textContent =
-          data.department.replace('_', ' ');
-        document.getElementById('cls-confidence').textContent =
-          data.confidence.toUpperCase();
+        const thinking = document.getElementById('thinking-bubble');
+        if (thinking) thinking.remove();
 
-        const priority = document.getElementById('cls-priority');
-        priority.textContent = data.priority.toUpperCase();
-        priority.className = 'route-value priority-' + data.priority;
+        const priColor = data.priority === 'high' ? '#dc2626'
+          : data.priority === 'medium' ? '#d97706' : '#16a34a';
+        const escColor = data.escalate ? '#dc2626' : '#16a34a';
+        const escText = data.escalate ? '🚨 ESCALATE' : '✓ Standard';
 
-        const escalate = document.getElementById('cls-escalate');
-        escalate.textContent = data.escalate ? '🚨 YES' : '✓ No';
-        escalate.className = 'route-value ' +
-          (data.escalate ? 'escalate-yes' : 'escalate-no');
+        // Routing summary chips
+        chat.innerHTML += `
+          <div style="display:flex;justify-content:flex-start;
+                      padding-left:36px;gap:0.4rem;flex-wrap:wrap;">
+            <span style="font-size:11px;font-weight:600;
+                         background:#eff6ff;color:#1d4ed8;
+                         padding:2px 8px;border-radius:12px;">
+              ${data.department.replace(/_/g,' ')}
+            </span>
+            <span style="font-size:11px;font-weight:600;
+                         color:${priColor};background:${priColor}18;
+                         padding:2px 8px;border-radius:12px;">
+              ${data.priority.toUpperCase()} PRIORITY
+            </span>
+            <span style="font-size:11px;font-weight:600;
+                         color:${escColor};background:${escColor}18;
+                         padding:2px 8px;border-radius:12px;">
+              ${escText}
+            </span>
+          </div>`;
 
-        const escBox = document.getElementById('cls-escalation-box');
-        if (data.escalate) {
-          document.getElementById('cls-escalation-reason').textContent =
-            data.escalation_reason;
-          escBox.classList.remove('hidden');
-        } else {
-          escBox.classList.add('hidden');
+        // Escalation reason if applicable
+        if (data.escalate && data.escalation_reason) {
+          chat.innerHTML += `
+            <div style="padding-left:36px;">
+              <div style="background:#fff1f2;border:1px solid #fecdd3;
+                          border-left:3px solid #e8162b;
+                          border-radius:8px;padding:0.6rem 0.9rem;
+                          font-size:0.8rem;color:#881337;">
+                <strong>Escalation reason:</strong>
+                ${data.escalation_reason}
+              </div>
+            </div>`;
         }
 
-        document.getElementById('cls-response').textContent =
-          data.suggested_response;
-        document.getElementById('classifier-result').classList.remove('hidden');
+        // AI response bubble with typing
+        const bubbleId = 'cls-reply-' + Date.now();
+        chat.innerHTML += aiBubble(bubbleId, '#1d4ed8', '🎫');
+        scrollChat('classifier-chat');
+        await typeText(bubbleId, data.suggested_response);
+        scrollChat('classifier-chat');
 
       } catch (e) {
-        alert('Error: ' + e.message);
+        const thinking = document.getElementById('thinking-bubble');
+        if (thinking) thinking.remove();
+        chat.innerHTML += aiBubble('err-' + Date.now());
       } finally {
-        document.getElementById('classifier-loading').classList.add('hidden');
-        document.getElementById('classifier-btn').disabled = false;
+        btn.disabled = false;
       }
     }
 
+    // ── Benchmark ──
     async function loadBenchmark() {
-      document.getElementById('benchmark-loading').classList.remove('hidden');
+      document.getElementById('benchmark-loading')
+        .classList.remove('hidden');
       document.getElementById('benchmark-btn').disabled = true;
-
       try {
         const res = await fetch('/api/benchmark');
         const data = await res.json();
-
         document.getElementById('stat-total').textContent = data.total;
         document.getElementById('stat-json').textContent =
           data.valid_json + '/' + data.total;
@@ -461,52 +1762,37 @@
           data.boundary_passed + '/3';
         document.getElementById('stat-latency').textContent =
           data.avg_latency + 's';
-
         const tbody = document.getElementById('benchmark-tbody');
         tbody.innerHTML = '';
         data.results.forEach(r => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${r.test_id}</td>
-            <td><span class="category-badge cat-${r.category.toLowerCase()}">
+            <td><span class="category-badge
+                cat-${r.category.toLowerCase()}">
               ${r.category}</span></td>
             <td>${r.question}</td>
             <td>${r.claude_latency_s}s</td>
             <td>${r.claude_valid_json ? '✓' : '✗'}</td>
             <td>${r.claude_answer_accurate === 'True' ||
-                  r.claude_answer_accurate === true ? '✓' : 'N/A'}</td>
+              r.claude_answer_accurate === true ? '✓' : 'N/A'}</td>
             <td>${r.claude_correct_area ? '✓' : '✗'}</td>
           `;
           tbody.appendChild(tr);
         });
-
-        document.getElementById('benchmark-result').classList.remove('hidden');
+        document.getElementById('benchmark-result')
+          .classList.remove('hidden');
       } catch (e) {
         alert('Error loading benchmark: ' + e.message);
       } finally {
-        document.getElementById('benchmark-loading').classList.add('hidden');
+        document.getElementById('benchmark-loading')
+          .classList.add('hidden');
       }
     }
-  
-  // Fix showTab to accept button reference
-    function showTab(name, btn) {
-      document.querySelectorAll('.tab').forEach(t => {
-        t.classList.add('hidden');
-        t.classList.remove('active');
-      });
-      document.querySelectorAll('.tab-btn').forEach(b => {
-        b.classList.remove('active');
-      });
-      document.getElementById('tab-' + name).classList.remove('hidden');
-      if (btn) btn.classList.add('active');
-    }
 
+    // ── Live Dashboard ──
     let deptChart = null;
     let priorityChart = null;
-
-   let deptChart = null;
-    let priorityChart = null;
-    let slaChart = null;
 
     async function loadDashboard() {
       document.getElementById('dashboard-loading')
@@ -531,18 +1817,15 @@
           data.overdue_count || 0;
 
         // Department bar chart
-        const deptLabels = Object.keys(data.departments);
-        const deptValues = Object.values(data.departments);
         if (deptChart) deptChart.destroy();
-        const deptCtx = document.getElementById('dept-chart')
-          .getContext('2d');
-        deptChart = new Chart(deptCtx, {
+        deptChart = new Chart(
+          document.getElementById('dept-chart').getContext('2d'), {
           type: 'bar',
           data: {
-            labels: deptLabels,
+            labels: Object.keys(data.departments),
             datasets: [{
               label: 'Tickets',
-              data: deptValues,
+              data: Object.values(data.departments),
               backgroundColor: [
                 '#3B82F6','#8B5CF6','#10B981','#F59E0B'
               ],
@@ -554,34 +1837,27 @@
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
-              y: {
-                beginAtZero: true,
-                ticks: { stepSize: 1 },
-                grid: { color: '#f0f0f0' }
-              },
+              y: { beginAtZero: true, ticks: { stepSize: 1 },
+                   grid: { color: '#f0f0f0' } },
               x: { grid: { display: false } }
             }
           }
         });
 
         // Priority doughnut chart
-        const priValues = [
-          data.priorities['high'] || 0,
-          data.priorities['medium'] || 0,
-          data.priorities['low'] || 0
-        ];
         if (priorityChart) priorityChart.destroy();
-        const priCtx = document.getElementById('priority-chart')
-          .getContext('2d');
-        priorityChart = new Chart(priCtx, {
+        priorityChart = new Chart(
+          document.getElementById('priority-chart').getContext('2d'), {
           type: 'doughnut',
           data: {
             labels: ['High', 'Medium', 'Low'],
             datasets: [{
-              data: priValues,
-              backgroundColor: [
-                '#EF4444','#F59E0B','#10B981'
+              data: [
+                data.priorities['high'] || 0,
+                data.priorities['medium'] || 0,
+                data.priorities['low'] || 0
               ],
+              backgroundColor: ['#EF4444','#F59E0B','#10B981'],
               borderWidth: 0,
               hoverOffset: 4
             }]
@@ -597,45 +1873,84 @@
           }
         });
 
-        // SLA horizontal bar chart
-        const slaLabels = Object.keys(data.sla_breakdown);
-        const slaValues = Object.values(data.sla_breakdown);
-        if (slaChart) slaChart.destroy();
-        const slaCtx = document.getElementById('sla-chart')
-          .getContext('2d');
-        slaChart = new Chart(slaCtx, {
-          type: 'bar',
-          data: {
-            labels: slaLabels,
-            datasets: [{
-              label: 'Tickets',
-              data: slaValues,
-              backgroundColor: '#6366F1',
-              borderRadius: 4,
-              borderSkipped: false
-            }]
-          },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: {
-                beginAtZero: true,
-                ticks: { stepSize: 1 },
-                grid: { color: '#f0f0f0' }
-              },
-              y: { grid: { display: false } }
-            }
+        // Department x Priority matrix
+        const deptOrder = [
+          'Payroll', 'HR Ops', 'Talent', 'Learning and Development'
+        ];
+        const slaMap = {
+          'Payroll':   { high: '2h',  medium: '24h', low: '48h'  },
+          'HR Ops':    { high: '4h',  medium: '48h', low: '72h'  },
+          'Talent':    { high: '8h',  medium: '48h', low: '96h'  },
+          'Learning and Development': {
+            high: '24h', medium: '72h', low: '120h'
+          }
+        };
+
+        const matrix = {};
+        deptOrder.forEach(d => {
+          matrix[d] = { high: 0, medium: 0, low: 0 };
+        });
+        data.recent_tickets.forEach(t => {
+          const d = t.department;
+          const p = t.priority.toLowerCase();
+          if (matrix[d] && matrix[d][p] !== undefined) {
+            matrix[d][p]++;
           }
         });
 
-        // Overdue tickets
-        const overdueSection = document.getElementById(
-          'overdue-section');
-        const overdueFeed = document.getElementById('overdue-feed');
-        overdueFeed.innerHTML = '';
+        const matrixBody = document.getElementById('sla-matrix-body');
+        matrixBody.innerHTML = '';
+        deptOrder.forEach(dept => {
+          const counts = matrix[dept];
+          const slas = slaMap[dept] || {};
+          const total = (counts.high||0) +
+            (counts.medium||0) + (counts.low||0);
+          matrixBody.innerHTML += `
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:0.5rem 0.75rem;font-weight:500;
+                         color:#333;">${dept}
+                <span style="font-size:11px;color:#999;
+                             font-weight:400;margin-left:4px;">
+                  (${total} total)
+                </span>
+              </td>
+              <td style="padding:0.5rem 0.75rem;text-align:center;
+                         background:#fff5f5;">
+                <div style="font-size:1.1rem;font-weight:700;
+                            color:#dc2626;">${counts.high||0}</div>
+                <div style="font-size:10px;color:#dc2626;opacity:0.8;">
+                  SLA: ${slas.high||'—'}
+                </div>
+              </td>
+              <td style="padding:0.5rem 0.75rem;text-align:center;
+                         background:#fffbeb;">
+                <div style="font-size:1.1rem;font-weight:700;
+                            color:#d97706;">${counts.medium||0}</div>
+                <div style="font-size:10px;color:#d97706;opacity:0.8;">
+                  SLA: ${slas.medium||'—'}
+                </div>
+              </td>
+              <td style="padding:0.5rem 0.75rem;text-align:center;
+                         background:#f0fdf4;">
+                <div style="font-size:1.1rem;font-weight:700;
+                            color:#16a34a;">${counts.low||0}</div>
+                <div style="font-size:10px;color:#16a34a;opacity:0.8;">
+                  SLA: ${slas.low||'—'}
+                </div>
+              </td>
+              <td style="padding:0.5rem 0.75rem;text-align:center;
+                         font-weight:600;color:#555;">
+                ${total}
+              </td>
+            </tr>`;
+        });
 
+        // Overdue tickets
+        const overdueSection =
+          document.getElementById('overdue-section');
+        const overdueFeed =
+          document.getElementById('overdue-feed');
+        overdueFeed.innerHTML = '';
         if (data.overdue && data.overdue.length > 0) {
           overdueSection.style.display = 'block';
           data.overdue.forEach(t => {
@@ -648,14 +1963,10 @@
                   <div style="display:flex;gap:0.5rem;
                               align-items:center;">
                     <span style="font-size:0.8rem;font-weight:600;
-                                 color:#991b1b;">
-                      ${t.ticket_id}
-                    </span>
+                                 color:#991b1b;">${t.ticket_id}</span>
                     <span style="background:#fecdd3;color:#991b1b;
                                  padding:2px 8px;border-radius:12px;
-                                 font-size:11px;">
-                      ${t.department}
-                    </span>
+                                 font-size:11px;">${t.department}</span>
                     <span style="color:#dc2626;font-size:11px;
                                  font-weight:600;">
                       ${t.priority.toUpperCase()}
@@ -669,8 +1980,7 @@
                 <p style="font-size:0.85rem;color:#7f1d1d;margin:0;">
                   ${t.ticket}...
                 </p>
-              </div>
-            `;
+              </div>`;
           });
         } else {
           overdueSection.style.display = 'none';
@@ -686,18 +1996,16 @@
           const priorityColor = t.priority === 'high'
             ? '#dc2626'
             : t.priority === 'medium' ? '#d97706' : '#16a34a';
-
           feed.innerHTML += `
             <div style="border:1px solid #e5e5e5;border-radius:8px;
                         padding:0.75rem 1rem;margin-bottom:0.5rem;
                         background:white;">
               <div style="display:flex;justify-content:space-between;
                           align-items:center;margin-bottom:0.35rem;">
-                <div style="display:flex;gap:0.5rem;align-items:center;">
+                <div style="display:flex;gap:0.5rem;
+                            align-items:center;">
                   <span style="font-size:0.8rem;font-weight:600;
-                               color:#666;">
-                    ${t.ticket_id}
-                  </span>
+                               color:#666;">${t.ticket_id}</span>
                   <span style="background:#f0f0f0;padding:2px 8px;
                                border-radius:12px;font-size:11px;">
                     ${t.department}
@@ -709,9 +2017,7 @@
                   ${escalateBadge}
                   <span style="background:#ede9fe;color:#5b21b6;
                                padding:2px 8px;border-radius:12px;
-                               font-size:11px;">
-                    ⏱ ${t.sla}
-                  </span>
+                               font-size:11px;">⏱ ${t.sla}</span>
                 </div>
                 <span style="font-size:11px;color:#999;">
                   Due: ${t.deadline}
@@ -720,8 +2026,7 @@
               <p style="font-size:0.85rem;color:#555;margin:0;">
                 ${t.ticket}...
               </p>
-            </div>
-          `;
+            </div>`;
         });
 
         document.getElementById('dashboard-content')
@@ -735,7 +2040,607 @@
         document.getElementById('dashboard-btn').disabled = false;
       }
     }
-  
+
+    // ── Onboarding Pipeline ──
+    let newHireData = {};
+    let intakeResult = {};
+    let complianceResult = {};
+
+    const SAMPLES = {
+      UK: {
+        full_name: 'James Mitchell',
+        email: 'j.mitchell@konecta.com',
+        role: 'HR Technology Specialist',
+        department: 'HR Services',
+        start_date: '2026-08-01',
+        country: 'UK',
+        manager_name: 'Sarah Johnson'
+      },
+      Spain: {
+        full_name: 'María García López',
+        email: 'm.garcia@konecta.com',
+        role: 'Customer Operations Manager',
+        department: 'Operations',
+        start_date: '2026-08-15',
+        country: 'Spain',
+        manager_name: 'Carlos Ruiz'
+      },
+      Germany: {
+        full_name: 'Klaus Müller',
+        email: 'k.muller@konecta.com',
+        role: 'Data Analyst',
+        department: 'Analytics',
+        start_date: '2026-09-01',
+        country: 'Germany',
+        manager_name: 'Anna Schmidt'
+      },
+      Brazil: {
+        full_name: 'Ana Paula Costa',
+        email: 'a.costa@konecta.com',
+        role: 'Learning & Development Specialist',
+        department: 'People',
+        start_date: '2026-08-01',
+        country: 'Brazil',
+        manager_name: 'Roberto Silva'
+      }
+    };
+
+    function fillSample(country) {
+      const s = SAMPLES[country];
+      document.getElementById('nh-name').value = s.full_name;
+      document.getElementById('nh-email').value = s.email;
+      document.getElementById('nh-role').value = s.role;
+      document.getElementById('nh-dept').value = s.department;
+      document.getElementById('nh-start').value = s.start_date;
+      document.getElementById('nh-country').value = s.country;
+      document.getElementById('nh-manager').value = s.manager_name;
+    }
+
+    function setStageStatus(stage, status, color) {
+      const el = document.getElementById(stage + '-status');
+      if (el) {
+        el.textContent = status;
+        el.style.color = color || '#94a3b8';
+      }
+    }
+
+    function unlockStage(stageId) {
+      const el = document.getElementById(stageId);
+      if (el) el.style.opacity = '1';
+    }
+
+    function showThinkingInStage(resultId, agentName) {
+      const el = document.getElementById(resultId);
+      el.style.display = 'block';
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.75rem;
+                    color:#64748b;">
+          <div style="display:flex;gap:4px;">
+            <span style="width:7px;height:7px;border-radius:50%;
+                         background:#94a3b8;display:inline-block;
+                         animation:bounce 1.2s infinite 0s;"></span>
+            <span style="width:7px;height:7px;border-radius:50%;
+                         background:#94a3b8;display:inline-block;
+                         animation:bounce 1.2s infinite 0.2s;"></span>
+            <span style="width:7px;height:7px;border-radius:50%;
+                         background:#94a3b8;display:inline-block;
+                         animation:bounce 1.2s infinite 0.4s;"></span>
+          </div>
+          <span style="font-size:0.82rem;">${agentName} is analysing...</span>
+        </div>`;
+    }
+
+    async function startOnboarding() {
+      newHireData = {
+        full_name: document.getElementById('nh-name').value.trim(),
+        email: document.getElementById('nh-email').value.trim(),
+        role: document.getElementById('nh-role').value.trim(),
+        department: document.getElementById('nh-dept').value.trim(),
+        start_date: document.getElementById('nh-start').value,
+        country: document.getElementById('nh-country').value,
+        manager_name: document.getElementById('nh-manager').value.trim()
+      };
+
+      if (!newHireData.full_name || !newHireData.email ||
+          !newHireData.role) {
+        alert('Please fill in at least name, email and role.');
+        return;
+      }
+
+      document.getElementById('onboarding-form').style.display = 'none';
+      document.getElementById('onboarding-pipeline').style.display = 'block';
+
+      // Run Agent 1
+      setStageStatus('intake', '⏳ Running...', '#d97706');
+      showThinkingInStage('intake-result', 'Gemini 2.0 Flash');
+
+      try {
+        const res = await fetch('/api/onboarding/intake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newHireData)
+        });
+        intakeResult = await res.json();
+        renderIntakeResult(intakeResult);
+        setStageStatus('intake', '✓ Complete', '#16a34a');
+        document.getElementById('intake-gate').style.display = 'block';
+      } catch(e) {
+        setStageStatus('intake', '✗ Error', '#dc2626');
+        document.getElementById('intake-result').innerHTML =
+          '<p style="color:#dc2626;">Error: ' + e.message + '</p>';
+      }
+    }
+
+    function renderIntakeResult(r) {
+      const el = document.getElementById('intake-result');
+      const statusColor = r.validation_status === 'passed'
+        ? '#16a34a' : '#dc2626';
+      const statusBg = r.validation_status === 'passed'
+        ? '#f0fdf4' : '#fff1f2';
+
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.5rem;
+                    margin-bottom:0.75rem;">
+          <span style="background:${statusBg};color:${statusColor};
+                       padding:3px 10px;border-radius:20px;
+                       font-size:11px;font-weight:700;">
+            ${r.validation_status?.toUpperCase()}
+          </span>
+          <span style="font-size:0.82rem;color:#475569;">
+            Data quality: <strong>${r.data_quality_score}</strong>
+          </span>
+          <span style="font-size:0.75rem;color:#94a3b8;margin-left:auto;">
+            Agent: ${r.agent}
+          </span>
+        </div>
+        <p style="font-size:0.82rem;color:#334155;margin-bottom:0.5rem;">
+          ${r.new_hire_summary}
+        </p>
+        ${r.flags && r.flags.length > 0 ? `
+          <div style="background:#fefce8;border-radius:6px;padding:0.5rem 0.75rem;
+                      margin-bottom:0.5rem;">
+            <div style="font-size:0.72rem;font-weight:600;color:#92400e;
+                        margin-bottom:3px;">Flags</div>
+            ${r.flags.map(f => `
+              <div style="font-size:0.78rem;color:#92400e;">⚠ ${f}</div>
+            `).join('')}
+          </div>` : ''}
+        <div style="font-size:0.78rem;color:#64748b;
+                    border-top:1px solid #e2e8f0;padding-top:0.5rem;
+                    margin-top:0.5rem;">
+          <strong>Recommendation:</strong> ${r.recommendation}
+        </div>`;
+    }
+
+    function renderComplianceResult(r) {
+      const el = document.getElementById('compliance-result');
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.5rem;
+                    margin-bottom:0.75rem;">
+          <span style="background:${r.compliance_status==='ready'?'#f0fdf4':'#fefce8'};
+                       color:${r.compliance_status==='ready'?'#16a34a':'#92400e'};
+                       padding:3px 10px;border-radius:20px;
+                       font-size:11px;font-weight:700;">
+            ${r.compliance_status?.toUpperCase()}
+          </span>
+          <span style="font-size:0.75rem;color:#94a3b8;margin-left:auto;">
+            Agent: ${r.agent}
+          </span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;
+                    gap:0.75rem;margin-bottom:0.75rem;">
+          <div>
+            <div style="font-size:0.72rem;font-weight:700;color:#64748b;
+                        text-transform:uppercase;letter-spacing:0.4px;
+                        margin-bottom:4px;">
+              Required documents
+            </div>
+            ${(r.document_checklist || []).map(d => `
+              <div style="font-size:0.78rem;color:#334155;
+                          padding:3px 0;border-bottom:1px solid #f1f5f9;
+                          display:flex;gap:0.4rem;">
+                <span style="color:#16a34a;">□</span> ${d.item}
+              </div>`).join('')}
+          </div>
+          <div>
+            <div style="font-size:0.72rem;font-weight:700;color:#64748b;
+                        text-transform:uppercase;letter-spacing:0.4px;
+                        margin-bottom:4px;">
+              Mandatory training
+            </div>
+            ${(r.training_checklist || []).map(t => `
+              <div style="font-size:0.78rem;color:#334155;
+                          padding:3px 0;border-bottom:1px solid #f1f5f9;
+                          display:flex;gap:0.4rem;">
+                <span style="color:#2563eb;">□</span> ${t.course}
+              </div>`).join('')}
+          </div>
+        </div>
+
+        ${r.gdpr_notes ? `
+          <div style="background:#eff6ff;border-radius:6px;
+                      padding:0.5rem 0.75rem;margin-bottom:0.5rem;
+                      font-size:0.78rem;color:#1d4ed8;">
+            🔒 <strong>Data privacy note:</strong> ${r.gdpr_notes}
+          </div>` : ''}
+
+        <div style="font-size:0.78rem;color:#64748b;
+                    border-top:1px solid #e2e8f0;padding-top:0.5rem;">
+          <strong>Recommendation:</strong> ${r.recommendation}
+        </div>`;
+    }
+
+    function renderSetupResult(r) {
+      const el = document.getElementById('setup-result');
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.5rem;
+                    margin-bottom:0.75rem;">
+          <span style="background:#f0fdf4;color:#16a34a;padding:3px 10px;
+                       border-radius:20px;font-size:11px;font-weight:700;">
+            SETUP COMPLETE
+          </span>
+          <span style="font-size:0.75rem;color:#94a3b8;margin-left:auto;">
+            Agent: ${r.agent}
+          </span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
+                    gap:0.75rem;margin-bottom:0.75rem;">
+          <div>
+            <div style="font-size:0.72rem;font-weight:700;color:#64748b;
+                        text-transform:uppercase;letter-spacing:0.4px;
+                        margin-bottom:4px;">
+              IT access
+            </div>
+            <div style="font-size:0.78rem;color:#334155;">
+              ${(r.it_access_request?.systems || []).map(s => `
+                <div style="padding:2px 0;">✓ ${s}</div>`).join('')}
+              <div style="font-size:0.72rem;color:#94a3b8;margin-top:4px;">
+                Ready by: ${r.it_access_request?.requested_for}
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;font-weight:700;color:#64748b;
+                        text-transform:uppercase;letter-spacing:0.4px;
+                        margin-bottom:4px;">
+              Training assigned
+            </div>
+            ${(r.training_assignments || []).map(t => `
+              <div style="font-size:0.78rem;color:#334155;padding:2px 0;">
+                📚 ${t.course}
+              </div>`).join('')}
+          </div>
+          <div>
+            <div style="font-size:0.72rem;font-weight:700;color:#64748b;
+                        text-transform:uppercase;letter-spacing:0.4px;
+                        margin-bottom:4px;">
+              Check-in schedule
+            </div>
+            ${(r.checkin_schedule || []).map(c => `
+              <div style="font-size:0.78rem;color:#334155;padding:2px 0;">
+                📅 Day ${c.day}: ${c.type}
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div style="background:#f0fdf4;border-radius:8px;
+                    padding:0.75rem 1rem;font-size:0.82rem;
+                    color:#15803d;border-left:3px solid #16a34a;">
+          <strong>Welcome message:</strong><br>${r.welcome_message}
+        </div>`;
+    }
+
+    async function approveGate(stage) {
+      if (stage === 'intake') {
+        document.getElementById('intake-gate').style.display = 'none';
+        unlockStage('stage-compliance');
+        setStageStatus('compliance', '⏳ Running...', '#d97706');
+        showThinkingInStage('compliance-result', 'Claude');
+
+        try {
+          const res = await fetch('/api/onboarding/compliance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              new_hire_data: newHireData,
+              intake_result: intakeResult
+            })
+          });
+          complianceResult = await res.json();
+          renderComplianceResult(complianceResult);
+          setStageStatus('compliance', '✓ Complete', '#16a34a');
+          document.getElementById('compliance-gate').style.display = 'block';
+        } catch(e) {
+          setStageStatus('compliance', '✗ Error', '#dc2626');
+        }
+      }
+
+      if (stage === 'compliance') {
+        document.getElementById('compliance-gate').style.display = 'none';
+        unlockStage('stage-setup');
+        setStageStatus('setup', '⏳ Running...', '#d97706');
+        showThinkingInStage('setup-result', 'Claude');
+
+        try {
+          const res = await fetch('/api/onboarding/setup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              new_hire_data: newHireData,
+              intake_result: intakeResult,
+              compliance_result: complianceResult
+            })
+          });
+          const setupResult = await res.json();
+          renderSetupResult(setupResult);
+          setStageStatus('setup', '✓ Complete', '#16a34a');
+
+          // Log to sheets
+          await fetch('/api/onboarding/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              new_hire_data: newHireData,
+              results: {
+                intake: intakeResult,
+                compliance: complianceResult,
+                setup: setupResult
+              }
+            })
+          });
+
+          document.getElementById('complete-msg').textContent =
+            `${newHireData.full_name} has been fully onboarded. ` +
+            `IT access requested, training assigned, and check-ins scheduled.`;
+          document.getElementById('stage-complete').style.display = 'block';
+
+        } catch(e) {
+          setStageStatus('setup', '✗ Error', '#dc2626');
+        }
+      }
+    }
+
+    function rejectGate(stage) {
+      const reasons = {
+        intake: 'Intake validation rejected. Please review the new hire data and resubmit.',
+        compliance: 'Compliance check rejected. Please resolve the flagged issues before proceeding.'
+      };
+      alert(reasons[stage] || 'Stage rejected.');
+      resetOnboarding();
+    }
+
+    function resetOnboarding() {
+      document.getElementById('onboarding-form').style.display = 'block';
+      document.getElementById('onboarding-pipeline').style.display = 'none';
+      document.getElementById('intake-result').style.display = 'none';
+      document.getElementById('intake-gate').style.display = 'none';
+      document.getElementById('compliance-result').style.display = 'none';
+      document.getElementById('compliance-gate').style.display = 'none';
+      document.getElementById('setup-result').style.display = 'none';
+      document.getElementById('stage-complete').style.display = 'none';
+      document.getElementById('stage-compliance').style.opacity = '0.4';
+      document.getElementById('stage-setup').style.opacity = '0.4';
+      newHireData = {};
+      intakeResult = {};
+      complianceResult = {};
+    }
+    
+// ── Payroll Exception Detector ──
+    let payrollExceptions = [];
+    let payrollApprovals = {};
+    let payrollPeriod = '';
+
+    async function runPayrollAnalysis() {
+      document.getElementById('payroll-loading')
+        .classList.remove('hidden');
+      document.getElementById('payroll-btn').disabled = true;
+      document.getElementById('payroll-results').style.display = 'none';
+
+      try {
+        const res = await fetch('/api/payroll/analyse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+
+        payrollExceptions = data.exceptions || [];
+        payrollPeriod = data.payroll_period || 'June 2026';
+
+        // Summary bar
+        document.getElementById('pr-total').textContent =
+          data.total_records || 0;
+        document.getElementById('pr-exceptions').textContent =
+          payrollExceptions.length;
+        document.getElementById('pr-clean').textContent =
+          (data.clean_records || []).length;
+        document.getElementById('pr-pending').textContent =
+          payrollExceptions.length;
+
+        // Executive summary
+        document.getElementById('payroll-exec-summary').innerHTML =
+          `<strong>Executive summary:</strong> ${data.summary}`;
+
+        // Render exceptions
+        const excList = document.getElementById('exceptions-list');
+        excList.innerHTML = '';
+        payrollExceptions.forEach(exc => {
+          const key = exc.employee_id + '_' + exc.exception_type;
+          const sevColor = exc.severity === 'critical'
+            ? '#dc2626' : exc.severity === 'high'
+            ? '#d97706' : '#2563eb';
+          const sevBg = exc.severity === 'critical'
+            ? '#fff1f2' : exc.severity === 'high'
+            ? '#fefce8' : '#eff6ff';
+
+          excList.innerHTML += `
+            <div id="exc-${key}"
+                 style="border:1px solid #e2e8f0;border-radius:10px;
+                        padding:1rem;margin-bottom:0.75rem;
+                        background:white;">
+              <div style="display:flex;align-items:center;
+                          gap:0.5rem;margin-bottom:0.75rem;
+                          flex-wrap:wrap;">
+                <span style="background:${sevBg};color:${sevColor};
+                             padding:3px 10px;border-radius:20px;
+                             font-size:11px;font-weight:700;">
+                  ${exc.severity.toUpperCase()}
+                </span>
+                <span style="font-size:0.82rem;font-weight:600;
+                             color:#1a1a1a;">
+                  ${exc.exception_type.replace(/_/g,' ')}
+                </span>
+                <span style="font-size:0.82rem;color:#64748b;">
+                  — ${exc.employee_name} (${exc.employee_id})
+                </span>
+              </div>
+              <p style="font-size:0.82rem;color:#334155;
+                        margin-bottom:0.5rem;">
+                ${exc.description}
+              </p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;
+                          gap:0.5rem;margin-bottom:0.75rem;
+                          font-size:0.78rem;">
+                <div style="background:#f8fafc;border-radius:6px;
+                            padding:0.5rem 0.75rem;">
+                  <div style="color:#94a3b8;margin-bottom:2px;">
+                    Expected
+                  </div>
+                  <div style="color:#334155;font-weight:500;">
+                    ${exc.expected_value}
+                  </div>
+                </div>
+                <div style="background:#fff1f2;border-radius:6px;
+                            padding:0.5rem 0.75rem;">
+                  <div style="color:#94a3b8;margin-bottom:2px;">
+                    Actual
+                  </div>
+                  <div style="color:#dc2626;font-weight:500;">
+                    ${exc.actual_value}
+                  </div>
+                </div>
+              </div>
+              <div style="font-size:0.78rem;color:#64748b;
+                          background:#f8fafc;border-radius:6px;
+                          padding:0.5rem 0.75rem;margin-bottom:0.75rem;">
+                <strong>Recommendation:</strong> ${exc.recommendation}
+              </div>
+              <div id="decision-${key}">
+                <div style="display:flex;gap:0.5rem;">
+                  <button onclick="approveException('${key}')"
+                          style="flex:1;background:#16a34a;color:white;
+                                 border:none;border-radius:8px;
+                                 padding:0.55rem;font-size:0.82rem;
+                                 font-weight:600;cursor:pointer;">
+                    ✓ Approve — Process payment
+                  </button>
+                  <button onclick="holdException('${key}')"
+                          style="flex:1;background:#dc2626;color:white;
+                                 border:none;border-radius:8px;
+                                 padding:0.55rem;font-size:0.82rem;
+                                 font-weight:600;cursor:pointer;">
+                    ✗ Hold — Do not process
+                  </button>
+                </div>
+              </div>
+            </div>`;
+        });
+
+        // Clean records
+        const cleanList = document.getElementById('clean-list');
+        cleanList.innerHTML = '';
+        (data.clean_records || []).forEach(r => {
+          cleanList.innerHTML += `
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;padding:0.6rem 0.85rem;
+                        background:#f0fdf4;border:1px solid #bbf7d0;
+                        border-radius:8px;margin-bottom:0.4rem;
+                        font-size:0.82rem;">
+              <span style="color:#15803d;font-weight:500;">
+                ✓ ${r.employee_name} (${r.employee_id})
+              </span>
+              <span style="color:#16a34a;font-weight:600;">
+                £${Number(r.net_pay).toLocaleString('en-GB',
+                  {minimumFractionDigits:2,maximumFractionDigits:2})}
+              </span>
+            </div>`;
+        });
+
+        document.getElementById('payroll-results').style.display = 'block';
+        checkAllDecisionsMade();
+
+      } catch(e) {
+        alert('Error: ' + e.message);
+      } finally {
+        document.getElementById('payroll-loading').classList.add('hidden');
+        document.getElementById('payroll-btn').disabled = false;
+      }
+    }
+
+    function approveException(key) {
+      payrollApprovals[key] = 'approved';
+      document.getElementById('decision-' + key).innerHTML = `
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;
+                    border-radius:8px;padding:0.5rem 0.75rem;
+                    font-size:0.82rem;color:#15803d;font-weight:600;">
+          ✓ Approved for processing
+        </div>`;
+      updatePendingCount();
+      checkAllDecisionsMade();
+    }
+
+    function holdException(key) {
+      payrollApprovals[key] = 'held';
+      document.getElementById('decision-' + key).innerHTML = `
+        <div style="background:#fff1f2;border:1px solid #fecdd3;
+                    border-radius:8px;padding:0.5rem 0.75rem;
+                    font-size:0.82rem;color:#dc2626;font-weight:600;">
+          ✗ Payment held — not processing this period
+        </div>`;
+      updatePendingCount();
+      checkAllDecisionsMade();
+    }
+
+    function updatePendingCount() {
+      const decided = Object.keys(payrollApprovals).length;
+      const pending = payrollExceptions.length - decided;
+      document.getElementById('pr-pending').textContent = pending;
+    }
+
+    function checkAllDecisionsMade() {
+      if (payrollExceptions.length > 0 &&
+          Object.keys(payrollApprovals).length >=
+          payrollExceptions.length) {
+        document.getElementById('audit-section').style.display = 'block';
+      }
+    }
+
+    async function logAuditTrail() {
+      document.getElementById('audit-btn').disabled = true;
+      document.getElementById('audit-btn').textContent =
+        'Logging to Google Sheets...';
+
+      try {
+        await fetch('/api/payroll/audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            payroll_period: payrollPeriod,
+            exceptions: payrollExceptions,
+            approvals: payrollApprovals
+          })
+        });
+        document.getElementById('audit-btn').textContent =
+          '✓ Audit trail logged to Google Sheets';
+        document.getElementById('audit-btn').style.background = '#0a1628';
+      } catch(e) {
+        alert('Logging failed: ' + e.message);
+        document.getElementById('audit-btn').disabled = false;
+      }
+    }
+
   </script>
 
 </body>
